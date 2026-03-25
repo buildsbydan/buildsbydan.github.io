@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>3C Learning Framework — AI Prompt Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #f5f2eb;
+  --bg2: #edeae0;
+  --bg3: #e4e0d4;
+  --ink: #1a1814;
+  --ink2: #4a4640;
+  --ink3: #8a847a;
+  --c1: #c8421a;
+  --c1bg: #fdf0ec;
+  --c1border: rgba(200,66,26,0.2);
+  --c2: #1a6e4a;
+  --c2bg: #edf7f2;
+  --c2border: rgba(26,110,74,0.2);
+  --c3: #1a3e8a;
+  --c3bg: #edf2fb;
+  --c3border: rgba(26,62,138,0.2);
+  --border: rgba(26,24,20,0.1);
+  --border2: rgba(26,24,20,0.18);
+  --radius: 8px;
+  --radius-lg: 14px;
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+  --serif: 'Playfair Display', serif;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+/* Grain overlay */
+body::after {
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;
+  z-index:999;
+  opacity:0.4;
+}
+
+.app {
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 5rem;
+}
+
+/* Header */
+header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border2);
+  gap: 1rem;
+}
+
+.header-left {}
+
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: 6px;
+}
+
+h1 {
+  font-family: var(--serif);
+  font-size: 32px;
+  font-weight: 900;
+  line-height: 1.1;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+
+h1 em { font-style: italic; color: var(--ink2); }
+
+.header-sub {
+  font-size: 13px;
+  color: var(--ink3);
+  margin-top: 6px;
+  font-weight: 300;
+  max-width: 420px;
+  line-height: 1.5;
+}
+
+.header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.protocol-badge {
+  display: flex;
+  gap: 4px;
+}
+
+.badge-c {
+  font-family: var(--serif);
+  font-size: 13px;
+  font-weight: 700;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  border: 1.5px solid;
+}
+.badge-c1 { color: var(--c1); border-color: var(--c1); }
+.badge-c2 { color: var(--c2); border-color: var(--c2); }
+.badge-c3 { color: var(--c3); border-color: var(--c3); }
+
+.live-dot {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink3);
+}
+.live-dot span {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--c2);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* Shared input field */
+.topic-bar {
+  background: white;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.25rem;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topic-bar label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  white-space: nowrap;
+}
+
+.topic-bar input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  background: transparent;
+  caret-color: var(--c1);
+}
+.topic-bar input::placeholder { color: var(--border2); font-weight: 400; }
+
+/* Main grid */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+/* Stage cards */
+.stage {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+}
+
+.stage-header {
+  padding: 1rem 1.1rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.stage-tag {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.stage-title {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+
+.stage-sub {
+  font-size: 11px;
+  font-weight: 300;
+  color: var(--ink3);
+  margin-top: 3px;
+  line-height: 1.4;
+}
+
+/* Stage 1 — Compress */
+.s1 .stage-tag { color: var(--c1); }
+.s1 .stage-title { color: var(--c1); }
+.s1 .stage-header { background: var(--c1bg); border-bottom-color: var(--c1border); }
+.s1 .mode-pill.active { background: var(--c1bg); border-color: var(--c1); color: var(--c1); }
+.s1 .output-box { border-top-color: var(--c1border); }
+.s1 .copy-btn:hover { border-color: var(--c1); color: var(--c1); }
+
+/* Stage 2 — Compile */
+.s2 .stage-tag { color: var(--c2); }
+.s2 .stage-title { color: var(--c2); }
+.s2 .stage-header { background: var(--c2bg); border-bottom-color: var(--c2border); }
+.s2 .mode-pill.active { background: var(--c2bg); border-color: var(--c2); color: var(--c2); }
+.s2 .output-box { border-top-color: var(--c2border); }
+.s2 .copy-btn:hover { border-color: var(--c2); color: var(--c2); }
+
+/* Stage 3 — Consolidate */
+.s3 .stage-tag { color: var(--c3); }
+.s3 .stage-title { color: var(--c3); }
+.s3 .stage-header { background: var(--c3bg); border-bottom-color: var(--c3border); }
+.s3 .mode-pill.active { background: var(--c3bg); border-color: var(--c3); color: var(--c3); }
+.s3 .output-box { border-top-color: var(--c3border); }
+.s3 .copy-btn:hover { border-color: var(--c3); color: var(--c3); }
+
+/* Mode selectors */
+.mode-row {
+  padding: 0.6rem 1.1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  overflow: visible;
+  position: relative;
+  z-index: 10;
+}
+
+.mode-pill {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: white;
+  color: var(--ink3);
+  cursor: pointer;
+  transition: all 0.12s;
+  white-space: nowrap;
+}
+.mode-pill:hover { border-color: var(--border2); color: var(--ink2); }
+
+/* Tooltip on hover */
+.mode-pill { position: relative; cursor: default; }
+
+/* Stage title tooltip trigger */
+.stage-title { cursor: default; }
+
+/* JS-driven tooltip */
+#tip {
+  position: fixed;
+  background: var(--ink);
+  color: var(--bg);
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 300;
+  line-height: 1.5;
+  padding: 8px 12px;
+  border-radius: 7px;
+  width: 210px;
+  white-space: normal;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s;
+  z-index: 9999;
+}
+
+/* Active mode explanation bar */
+/* removed — tooltips only */
+
+/* Stage header clickable info icon */
+.info-row { display:none; }
+.stage-explain { display: none; }
+
+/* Stage title tooltip — handled by JS */
+.stage-title {
+  display: inline-block;
+  cursor: default;
+}
+
+/* Output area */
+.output-box {
+  flex: 1;
+  padding: 0.875rem 1.1rem;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 300;
+  line-height: 1.75;
+  color: var(--ink2);
+  white-space: pre-wrap;
+  min-height: 180px;
+  overflow-y: auto;
+  border-top: 1px solid var(--border);
+  word-break: break-word;
+}
+
+.output-box.empty { color: var(--ink3); font-style: italic; }
+.output-box::-webkit-scrollbar { width: 3px; }
+.output-box::-webkit-scrollbar-thumb { background: var(--border2); }
+
+/* Copy button */
+.copy-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 9px 1.1rem;
+  border: none;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.copy-btn:hover { background: white; }
+.copy-btn.success { color: var(--c2); background: var(--c2bg); }
+
+/* Combined prompt output */
+.combined-section {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.combined-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+}
+
+.combined-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink2);
+}
+
+.combined-body {
+  padding: 1.25rem;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.8;
+  color: var(--ink2);
+  white-space: pre-wrap;
+  max-height: 280px;
+  overflow-y: auto;
+  word-break: break-word;
+}
+.combined-body.empty { color: var(--ink3); font-style: italic; }
+.combined-body::-webkit-scrollbar { width: 3px; }
+.combined-body::-webkit-scrollbar-thumb { background: var(--border2); }
+
+/* Send to AI section */
+.send-section {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+}
+
+.send-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: 0.875rem;
+}
+
+.ai-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+}
+
+.ai-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 10px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: var(--ink3);
+  text-align: center;
+}
+.ai-btn:hover { background: white; border-color: var(--border2); color: var(--ink); transform: translateY(-1px); }
+.ai-btn:active { transform: scale(0.97) translateY(0); }
+
+.ai-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* Copy all row */
+.copy-all-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.btn-copy-all {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  background: var(--bg2);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-copy-all:hover { background: white; border-color: var(--ink); color: var(--ink); }
+.btn-copy-all.success { background: var(--c2bg); border-color: var(--c2border); color: var(--c2); }
+
+/* Footer note */
+.footer-note {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink3);
+  text-align: center;
+  margin-top: 1.5rem;
+  letter-spacing: 0.06em;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 1.5rem; left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: var(--ink);
+  color: var(--bg);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  padding: 8px 20px;
+  border-radius: 20px;
+  opacity: 0;
+  transition: all 0.2s;
+  pointer-events: none;
+  z-index: 1000;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Responsive */
+@media (max-width: 780px) {
+  .grid { grid-template-columns: 1fr; }
+  .ai-grid { grid-template-columns: repeat(3, 1fr); }
+  h1 { font-size: 24px; }
+  .header-right { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <header>
+    <div class="header-left">
+      <div class="eyebrow">3C Protocol · AI Learning Framework</div>
+      <h1>Learn <em>Faster</em><br>with AI</h1>
+      <p class="header-sub">Built on the 3C Protocol — Compress, Compile, Consolidate. Type your topic and get the right AI prompt for every stage of learning.</p>
+    </div>
+    <div class="header-right">
+      <div class="protocol-badge">
+        <div class="badge-c badge-c1">C</div>
+        <div class="badge-c badge-c2">C</div>
+        <div class="badge-c badge-c3">C</div>
+      </div>
+      <div class="live-dot"><span></span>builds live</div>
+    </div>
+  </header>
+
+  <!-- Topic input -->
+  <div class="topic-bar">
+    <label>What are you learning?</label>
+    <input type="text" id="topic" placeholder="e.g. options trading, machine learning, stoic philosophy…" />
+  </div>
+
+  <!-- Three stage cards -->
+  <div class="grid">
+
+    <!-- C1 COMPRESS -->
+    <div class="stage s1">
+      <div class="stage-header">
+        <div class="stage-tag">Stage 1 · Compress</div>
+        <div class="stage-title" data-tip="Before you study anything, figure out what's actually worth learning. Reduces the entire subject down to the essential 20% so you don't waste time on the rest.">Compress</div>
+        <div class="stage-sub">Reduce to the essential 20%. Select, associate, chunk.</div>
+      </div>
+      <div class="mode-row" id="c1-modes">
+        <div class="mode-pill active" data-mode="80/20"
+          data-tip="Finds the 20% of concepts that give you 80% of the understanding. Best starting point for any new subject.">80/20 filter</div>
+        <div class="mode-pill" data-mode="association"
+          data-tip="Connects new ideas to things you already know. New knowledge only sticks when it hooks onto something familiar.">Association</div>
+        <div class="mode-pill" data-mode="chunking"
+          data-tip="Breaks the topic into 3–5 named groups. Your working memory holds ~4 ideas max — chunking works with that limit.">Chunking</div>
+        <div class="mode-pill" data-mode="mental model"
+          data-tip="Builds one simple metaphor or framework that captures the whole subject — something you can picture and recall instantly.">Mental model</div>
+      </div>
+      <div class="output-box empty" id="c1-output">← type a topic above</div>
+      <button class="copy-btn" id="c1-copy" onclick="copyStage('c1')">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        Copy C1 Prompt
+      </button>
+    </div>
+
+    <!-- C2 COMPILE -->
+    <div class="stage s2">
+      <div class="stage-header">
+        <div class="stage-tag">Stage 2 · Compile</div>
+        <div class="stage-title" data-tip="Where you stop reading and start doing. The AI tests, drills, and pushes back — because struggle is what actually wires knowledge into your brain.">Compile</div>
+        <div class="stage-sub">Turn information into real skill. Struggle-based practice.</div>
+      </div>
+      <div class="mode-row" id="c2-modes">
+        <div class="mode-pill active" data-mode="quiz"
+          data-tip="AI quizzes you progressively — each question harder than the last. Forces you to produce answers from memory, not just recognize them.">Quiz me</div>
+        <div class="mode-pill" data-mode="slow burn"
+          data-tip="Breaks a skill into tiny steps and drills each one slowly. Counter-intuitive but proven: going slower builds mastery faster.">Slow burn</div>
+        <div class="mode-pill" data-mode="teach back"
+          data-tip="You explain the topic to the AI as if it knows nothing. Teaching exposes exactly what you don't actually understand yet.">Teach back</div>
+        <div class="mode-pill" data-mode="stress test"
+          data-tip="AI plays a skeptical expert who challenges every answer. Find the holes in your knowledge before real life finds them.">Stress test</div>
+      </div>
+      <div class="output-box empty" id="c2-output">← type a topic above</div>
+      <button class="copy-btn" id="c2-copy" onclick="copyStage('c2')">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        Copy C2 Prompt
+      </button>
+    </div>
+
+    <!-- C3 CONSOLIDATE -->
+    <div class="stage s3">
+      <div class="stage-header">
+        <div class="stage-tag">Stage 3 · Consolidate</div>
+        <div class="stage-title" data-tip="Most people skip this entirely. This is where learning becomes permanent — your brain encodes memories during rest and sleep, not while you're studying.">Consolidate</div>
+        <div class="stage-sub">Lock it in. Review, connect, and deepen before sleep.</div>
+      </div>
+      <div class="mode-row" id="c3-modes">
+        <div class="mode-pill active" data-mode="review"
+          data-tip="Quick end-of-session recall — what stuck, what didn't, and one question to sleep on. Takes 5 minutes, doubles retention.">Review</div>
+        <div class="mode-pill" data-mode="connect"
+          data-tip="Links what you just learned to other things you already know. Isolated knowledge fades; connected knowledge compounds.">Connect ideas</div>
+        <div class="mode-pill" data-mode="gaps"
+          data-tip="Diagnostic that finds blind spots in your understanding — tells you exactly what to revisit next session.">Find gaps</div>
+        <div class="mode-pill" data-mode="sleep prep"
+          data-tip="Primes your brain's overnight replay. Your brain re-runs what you learned during sleep — this sets that signal strong before you rest.">Sleep prep</div>
+      </div>
+      <div class="output-box empty" id="c3-output">← type a topic above</div>
+      <button class="copy-btn" id="c3-copy" onclick="copyStage('c3')">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        Copy C3 Prompt
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Combined full session prompt -->
+  <div class="combined-section">
+    <div class="combined-header">
+      <span class="combined-title">Full 3C Session Prompt — paste this into any AI to run all three stages</span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--ink3);" id="total-chars">0 chars</span>
+    </div>
+    <div class="combined-body empty" id="combined-output">Your full 3C session prompt will appear here once you enter a topic.</div>
+  </div>
+
+  <!-- Send to AI -->
+  <div class="send-section">
+    <div class="send-title">Copy &amp; open in your AI of choice</div>
+    <div class="ai-grid">
+      <button class="ai-btn" onclick="openAI('https://claude.ai/new')">
+        <span class="ai-icon">🟣</span>Claude
+      </button>
+      <button class="ai-btn" onclick="openAI('https://chat.openai.com/')">
+        <span class="ai-icon">🟢</span>ChatGPT
+      </button>
+      <button class="ai-btn" onclick="openAI('https://gemini.google.com/')">
+        <span class="ai-icon">🔵</span>Gemini
+      </button>
+      <button class="ai-btn" onclick="openAI('https://www.perplexity.ai/')">
+        <span class="ai-icon">🩵</span>Perplexity
+      </button>
+      <button class="ai-btn" onclick="openAI('https://copilot.microsoft.com/')">
+        <span class="ai-icon">🔷</span>Copilot
+      </button>
+      <button class="ai-btn" onclick="openAI('https://www.meta.ai/')">
+        <span class="ai-icon">🟠</span>Meta AI
+      </button>
+    </div>
+    <div class="copy-all-row">
+      <button class="btn-copy-all" id="copy-all-btn" onclick="copyAll()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        Copy full 3C session prompt
+      </button>
+    </div>
+  </div>
+
+  <div class="footer-note">Compress before you consume · Compile through struggle · Consolidate through rest</div>
+
+</div>
+
+<div id="tip"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── JS Tooltip ───────────────────────────────────────────────────────────────
+const tip = document.getElementById('tip');
+
+document.querySelectorAll('[data-tip]').forEach(el => {
+  el.addEventListener('mouseenter', e => {
+    tip.textContent = el.dataset.tip;
+    tip.style.opacity = '1';
+    position(e);
+  });
+  el.addEventListener('mousemove', position);
+  el.addEventListener('mouseleave', () => {
+    tip.style.opacity = '0';
+  });
+});
+
+function position(e) {
+  const pad = 12;
+  const tw = 210;
+  let x = e.clientX + pad;
+  let y = e.clientY + pad;
+  if (x + tw > window.innerWidth - pad) x = e.clientX - tw - pad;
+  if (y + tip.offsetHeight > window.innerHeight - pad) y = e.clientY - tip.offsetHeight - pad;
+  tip.style.left = x + 'px';
+  tip.style.top  = y + 'px';
+}
+
+// ─── Prompt templates ───────────────────────────────────────────────────────
+
+const c1Templates = {
+  "80/20": (t) => `You are a master teacher and learning strategist. I am learning about: ${t}
+
+My time is limited. Apply the 80/20 rule ruthlessly.
+
+Your task:
+1. Identify the critical 20% of concepts in "${t}" that will give me 80% of the practical understanding.
+2. List each concept in order of importance — most foundational first.
+3. For each concept, give me one sentence explaining why it's essential.
+4. Flag anything I should skip entirely at this stage.
+
+Do not give me a survey of everything. Give me the highest-leverage path in.`,
+
+  "association": (t) => `You are a Socratic learning guide. I am learning: ${t}
+
+I need to connect this to what I already know so it actually sticks.
+
+Your task:
+1. Identify the 3 core ideas inside "${t}".
+2. For each idea, find a powerful analogy or connection to something most people already understand intuitively.
+3. Then ask me: "What does this remind you of from your own experience?" — wait for my answer before continuing.
+
+The goal is association, not information dump. Help me build bridges, not just load cargo.`,
+
+  "chunking": (t) => `You are an expert at simplifying complex subjects. I am learning: ${t}
+
+My brain can hold about 4 ideas at once. I need you to chunk this topic.
+
+Your task:
+1. Break "${t}" into exactly 3–5 chunks (no more).
+2. Give each chunk a memorable name or short label.
+3. Describe each chunk in 2 sentences max.
+4. Show me how the chunks connect to each other — draw the relationship in plain text if needed.
+
+Then ask me: which chunk do I want to go deeper on first?`,
+
+  "mental model": (t) => `You are a mental model architect. I am learning: ${t}
+
+I need a single simple model that captures the whole subject.
+
+Your task:
+1. Create one clear mental model or framework for understanding "${t}" — it can be a metaphor, a diagram in text, a simple equation, or a 3-step loop.
+2. Explain why this model works and what it helps me predict or decide.
+3. Give me one real-world example of the model in action.
+4. Tell me where the model breaks down or has limits.
+
+Make it so simple I could explain it to a 10-year-old.`
+};
+
+const c2Templates = {
+  "quiz": (t) => `You are a rigorous Socratic tutor. I am studying: ${t}
+
+Do NOT explain anything to me yet. Test me first.
+
+Your task — run a progressive learn-test loop:
+1. Ask me one focused question about a core concept in "${t}". Wait for my answer.
+2. After I answer, give brief feedback: what I got right, what I missed, what to sharpen.
+3. Then ask the next question — slightly harder than the last.
+4. Repeat for 5 rounds, escalating difficulty each time.
+
+Use the Generation Effect: force me to produce the answer from memory. The struggle is the point. Do not give me the answer before I try.`,
+
+  "slow burn": (t) => `You are a deliberate practice coach. I am learning a skill within: ${t}
+
+I need to practice at slow burn pace — excruciatingly slow, with full attention on every micro-step.
+
+Your task:
+1. Break the core skill in "${t}" into its smallest possible procedural steps.
+2. Walk me through the first step in detail — describe what mastery of that single step looks and feels like.
+3. Give me a micro-drill I can do RIGHT NOW to practice that step.
+4. After I report back, move to the next step only when I confirm the first one feels solid.
+
+No rushing. No skipping. Slow is smooth, smooth is fast.`,
+
+  "teach back": (t) => `You are my learning accountability partner. I have been studying: ${t}
+
+I am going to teach it back to you — you are my imaginary student who knows nothing about this topic.
+
+Your task:
+1. Tell me: "Explain ${t} to me like I've never heard of it." Then stay silent.
+2. After I explain, score my explanation on 3 criteria: Accuracy (1–5), Clarity (1–5), Completeness (1–5).
+3. Identify the single biggest gap or misconception in my explanation.
+4. Ask me a follow-up question that targets that specific gap.
+5. Repeat until I score 4+ on all three criteria.
+
+Teaching is the boss tool. Help me find what I don't actually know yet.`,
+
+  "stress test": (t) => `You are an irate expert who thinks I'm underprepared. I claim to understand: ${t}
+
+Stress test my knowledge. Do not go easy on me.
+
+Your task:
+1. Ask me the hardest practical question about "${t}" — the kind of question that separates people who really know it from people who just read about it.
+2. After I answer, probe for weaknesses: "But what about X?" or "That breaks down when Y — how do you handle that?"
+3. Push back on every vague answer. Demand specifics.
+4. Keep going until I either demonstrate real mastery or hit a wall I need to go study.
+
+I need to find the holes in my knowledge BEFORE reality does.`
+};
+
+const c3Templates = {
+  "review": (t) => `You are a spaced repetition coach. I just finished a 90-minute study session on: ${t}
+
+Help me consolidate before my brain needs to rest.
+
+Your task:
+1. Ask me to recall the 3 most important things I learned — no notes. I'll tell you from memory.
+2. After I recall, identify what I mentioned vs. what I left out from the core material.
+3. Highlight the 1–2 things most worth re-encoding before I rest.
+4. Give me a single "sleep question" — one open question to let my brain chew on overnight.
+
+This is my consolidation window. Keep it focused and brief. Rest is next.`,
+
+  "connect": (t) => `You are a knowledge synthesis coach. I have been studying: ${t}
+
+Help me build connections so this doesn't stay isolated knowledge.
+
+Your task:
+1. Ask me: what other subjects, skills, or experiences in my life does "${t}" remind me of?
+2. After I answer, help me map 3 genuine connections between "${t}" and what I already know.
+3. Then ask: where could I apply what I just learned in the next 7 days?
+4. Help me articulate one sentence that captures the universal principle behind "${t}" — something that transfers beyond this specific topic.
+
+Isolated knowledge fades. Connected knowledge compounds.`,
+
+  "gaps": (t) => `You are a diagnostic learning coach. I have been studying: ${t}
+
+Help me find my blind spots before they become problems.
+
+Your task:
+1. Give me a short diagnostic — 5 targeted questions that reveal gaps, not just surface recall.
+2. After each answer, tell me: solid, shaky, or gap.
+3. At the end, give me a prioritized list: what to review tonight, what to revisit next session, and what I can safely park.
+4. Recommend the single most useful next resource (type of content, not a specific link) to close my biggest gap.
+
+Better to find the gap now than fail when it matters.`,
+
+  "sleep prep": (t) => `You are a neuroscience-informed learning coach. I am about to wind down after studying: ${t}
+
+Help me prime my brain's overnight consolidation.
+
+Your task:
+1. Ask me to do a brief "brain dump" — tell you everything that came to mind about "${t}" today, freely, without structure.
+2. After I dump, reflect back the 2–3 strongest ideas I expressed.
+3. Give me one vivid image, metaphor, or mini-story that encodes the key insight — something sticky enough to replay in my sleep.
+4. End with this instruction: "Close your eyes for 10 seconds and picture the concept. Then rest."
+
+Sleep is when the wiring happens. Let's set the signal strong.`
+};
+
+let activeMode = { c1: '80/20', c2: 'quiz', c3: 'review' };
+let currentTopic = '';
+
+// ─── Pill setup ──────────────────────────────────────────────────────────────
+function setupPills(containerId, stage) {
+  document.querySelectorAll(`#${containerId} .mode-pill`).forEach(p => {
+    p.addEventListener('click', () => {
+      document.querySelectorAll(`#${containerId} .mode-pill`).forEach(x => x.classList.remove('active'));
+      p.classList.add('active');
+      activeMode[stage] = p.dataset.mode;
+      updateAll();
+    });
+  });
+}
+
+setupPills('c1-modes', 'c1');
+setupPills('c2-modes', 'c2');
+setupPills('c3-modes', 'c3');
+
+// ─── Build prompts ────────────────────────────────────────────────────────────
+function buildPrompts(topic) {
+  const t = topic.trim();
+
+  if (!t) {
+    ['c1','c2','c3'].forEach(s => {
+      const el = document.getElementById(s + '-output');
+      el.textContent = '← type a topic above';
+      el.classList.add('empty');
+    });
+    const cb = document.getElementById('combined-output');
+    cb.textContent = 'Your full 3C session prompt will appear here once you enter a topic.';
+    cb.classList.add('empty');
+    document.getElementById('total-chars').textContent = '0 chars';
+    return;
+  }
+
+  const p1 = c1Templates[activeMode.c1](t);
+  const p2 = c2Templates[activeMode.c2](t);
+  const p3 = c3Templates[activeMode.c3](t);
+
+  setOutput('c1-output', p1);
+  setOutput('c2-output', p2);
+  setOutput('c3-output', p3);
+
+  const combined = `━━━ 3C LEARNING SESSION ━━━ TOPIC: ${t.toUpperCase()} ━━━\n\n` +
+    `═══ C1 — COMPRESS (${activeMode.c1}) ═══\n\n${p1}\n\n` +
+    `═══ C2 — COMPILE (${activeMode.c2}) ═══\n\n${p2}\n\n` +
+    `═══ C3 — CONSOLIDATE (${activeMode.c3}) ═══\n\n${p3}\n\n` +
+    `━━━ END OF 3C SESSION PROMPT ━━━\nRun each stage in sequence. Rest 20 minutes between C2 and C3.`;
+
+  const cb = document.getElementById('combined-output');
+  cb.textContent = combined;
+  cb.classList.remove('empty');
+  document.getElementById('total-chars').textContent = combined.length.toLocaleString() + ' chars';
+}
+
+function setOutput(id, text) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.classList.remove('empty');
+}
+
+function updateAll() {
+  buildPrompts(currentTopic);
+}
+
+// ─── Topic input ──────────────────────────────────────────────────────────────
+document.getElementById('topic').addEventListener('input', e => {
+  currentTopic = e.target.value;
+  updateAll();
+});
+
+// ─── Copy individual stage ────────────────────────────────────────────────────
+function copyStage(stage) {
+  const text = document.getElementById(stage + '-output').textContent;
+  const btn = document.getElementById(stage + '-copy');
+  if (!currentTopic.trim()) { showToast('Enter a topic first'); return; }
+  navigator.clipboard.writeText(text).then(() => {
+    btn.classList.add('success');
+    btn.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Copied!`;
+    setTimeout(() => {
+      btn.classList.remove('success');
+      const labels = { c1: 'Copy C1 Prompt', c2: 'Copy C2 Prompt', c3: 'Copy C3 Prompt' };
+      btn.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> ${labels[stage]}`;
+    }, 2000);
+  });
+}
+
+// ─── Copy all ────────────────────────────────────────────────────────────────
+function copyAll() {
+  const text = document.getElementById('combined-output').textContent;
+  if (!currentTopic.trim()) { showToast('Enter a topic first'); return; }
+  const btn = document.getElementById('copy-all-btn');
+  navigator.clipboard.writeText(text).then(() => {
+    btn.classList.add('success');
+    btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Copied!`;
+    setTimeout(() => {
+      btn.classList.remove('success');
+      btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy full 3C session prompt`;
+    }, 2000);
+  });
+}
+
+// ─── Open AI ──────────────────────────────────────────────────────────────────
+function openAI(url) {
+  if (!currentTopic.trim()) { showToast('Enter a topic first'); return; }
+  const text = document.getElementById('combined-output').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('Copied — paste it when you arrive');
+    setTimeout(() => window.open(url, '_blank'), 500);
+  }).catch(() => window.open(url, '_blank'));
+}
+
+// ─── Toast ────────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+</script>
+</body>
+</html>

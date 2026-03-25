@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PromptForge — AI Prompt Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #f5f2eb;
+    --surface: #ffffff;
+    --surface2: #edeae0;
+    --surface3: #e4e0d4;
+    --border: rgba(26,24,20,0.1);
+    --border2: rgba(26,24,20,0.2);
+    --accent: #5a46e8;
+    --accent2: #7c6aff;
+    --accent-glow: rgba(90,70,232,0.08);
+    --text: #1a1814;
+    --text2: #4a4640;
+    --text3: #8a847a;
+    --green: #1a6e4a;
+    --green-bg: rgba(26,110,74,0.08);
+    --amber: #92600a;
+    --amber-bg: rgba(146,96,10,0.08);
+    --coral: #c8421a;
+    --coral-bg: rgba(200,66,26,0.08);
+    --teal: #0e6e7e;
+    --teal-bg: rgba(14,110,126,0.08);
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* Grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 2rem;
+    align-items: start;
+  }
+
+  /* Header */
+  header {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.5rem;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-mark {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, #5a46e8, #7c6aff);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    color: white;
+  }
+
+  .logo h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+
+  .logo p {
+    font-size: 12px;
+    color: var(--text3);
+    font-weight: 300;
+    margin-top: 1px;
+  }
+
+  .header-badge {
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    background: var(--surface2);
+  }
+
+  /* Form column */
+  .form-col { display: flex; flex-direction: column; gap: 1.25rem; }
+
+  /* Output column */
+  .output-col {
+    position: sticky;
+    top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  /* Section cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    transition: border-color 0.2s;
+  }
+  .card:focus-within { border-color: var(--border2); }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1rem;
+  }
+
+  .step-dot {
+    width: 26px; height: 26px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .dot-1 { background: var(--accent-glow); color: var(--accent2); border: 1px solid rgba(124,106,255,0.3); }
+  .dot-2 { background: var(--green-bg); color: var(--green); border: 1px solid rgba(52,211,153,0.3); }
+  .dot-3 { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(251,191,36,0.3); }
+  .dot-4 { background: var(--teal-bg); color: var(--teal); border: 1px solid rgba(34,211,238,0.3); }
+
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  /* Field rows */
+  .field { margin-bottom: 0.875rem; }
+  .field:last-child { margin-bottom: 0; }
+
+  .field-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+
+  input[type=text], textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 300;
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+    resize: vertical;
+  }
+  input[type=text]:focus, textarea:focus {
+    border-color: rgba(90,70,232,0.4);
+    background: var(--surface3);
+  }
+  input::placeholder, textarea::placeholder { color: var(--text3); }
+  textarea { min-height: 70px; line-height: 1.5; }
+
+  /* Pills */
+  .pills { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .pill {
+    font-size: 12px;
+    font-weight: 400;
+    padding: 5px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text2);
+    transition: all 0.15s;
+    user-select: none;
+    white-space: nowrap;
+  }
+  .pill:hover { border-color: var(--border2); color: var(--text); }
+  .pill.active-purple { background: rgba(90,70,232,0.08); border-color: rgba(90,70,232,0.35); color: var(--accent); }
+  .pill.active-green  { background: var(--green-bg); border-color: rgba(52,211,153,0.4); color: var(--green); }
+  .pill.active-amber  { background: var(--amber-bg); border-color: rgba(251,191,36,0.4); color: var(--amber); }
+  .pill.active-coral  { background: var(--coral-bg); border-color: rgba(248,113,113,0.4); color: var(--coral); }
+  .pill.active-teal   { background: var(--teal-bg); border-color: rgba(34,211,238,0.4); color: var(--teal); }
+
+  /* Mode cards */
+  .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  .mode-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .mode-card:hover { border-color: var(--border2); }
+  .mode-card.active {
+    background: rgba(90,70,232,0.06);
+    border-color: rgba(90,70,232,0.3);
+  }
+  .mode-card .mode-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+  .mode-card.active .mode-name { color: var(--accent); }
+  .mode-card .mode-desc { font-size: 11px; color: var(--text3); line-height: 1.4; }
+
+  /* Output panel */
+  .output-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .output-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .output-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .char-count {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .output-body {
+    padding: 16px;
+    min-height: 200px;
+    max-height: 420px;
+    overflow-y: auto;
+    font-size: 13px;
+    font-weight: 300;
+    line-height: 1.7;
+    color: var(--text2);
+    white-space: pre-wrap;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .output-body.has-content { color: var(--text); }
+
+  .output-body::-webkit-scrollbar { width: 4px; }
+  .output-body::-webkit-scrollbar-track { background: transparent; }
+  .output-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  /* Generate button */
+  .btn-generate {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent), #a78bfa);
+    border: none;
+    border-radius: var(--radius);
+    color: white;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 12px;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+    letter-spacing: 0.02em;
+  }
+  .btn-generate:hover { opacity: 0.9; }
+  .btn-generate:active { transform: scale(0.98); }
+
+  /* Action buttons */
+  .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  .btn-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text2);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 9px 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-decoration: none;
+  }
+  .btn-action:hover { border-color: var(--border2); color: var(--text); background: var(--surface3); }
+  .btn-action:active { transform: scale(0.97); }
+  .btn-action svg { flex-shrink: 0; }
+
+  .btn-copy { grid-column: 1 / -1; }
+
+  .btn-copy.success {
+    background: var(--green-bg);
+    border-color: rgba(26,110,74,0.3);
+    color: var(--green);
+  }
+
+  /* AI destination buttons */
+  .destinations { display: flex; flex-direction: column; gap: 6px; }
+
+  .dest-label {
+    font-size: 11px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 2px;
+    padding: 0 2px;
+  }
+
+  .btn-dest {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text2);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: left;
+    width: 100%;
+  }
+  .btn-dest:hover { border-color: var(--border2); color: var(--text); background: var(--surface3); }
+  .btn-dest:active { transform: scale(0.98); }
+
+  .dest-icon {
+    width: 26px; height: 26px;
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .dest-info { flex: 1; }
+  .dest-name { font-weight: 500; font-size: 13px; color: var(--text); }
+  .dest-url { font-size: 10px; color: var(--text3); }
+
+  .dest-arrow { color: var(--text3); font-size: 12px; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--text);
+    border-radius: 20px;
+    padding: 8px 20px;
+    font-size: 13px;
+    color: var(--bg);
+    opacity: 0;
+    transition: all 0.25s;
+    pointer-events: none;
+    z-index: 999;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* Responsive */
+  @media (max-width: 800px) {
+    .app { grid-template-columns: 1fr; }
+    header { grid-column: 1; }
+    .output-col { position: static; }
+    .mode-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <header>
+    <div class="logo">
+      <div class="logo-mark">PF</div>
+      <div>
+        <h1>PromptForge</h1>
+        <p>Build better prompts. Get better results.</p>
+      </div>
+    </div>
+    <div class="header-badge">Universal AI Prompt Builder</div>
+  </header>
+
+  <!-- LEFT: Form -->
+  <div class="form-col">
+
+    <!-- Step 1 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="step-dot dot-1">1</div>
+        <div class="card-title">Role & Context</div>
+      </div>
+      <div class="field">
+        <div class="field-label">AI Role — who should it be?</div>
+        <input type="text" id="role" placeholder="e.g. senior copywriter, data analyst, Socratic tutor" />
+      </div>
+      <div class="field">
+        <div class="field-label">Your context — who are you?</div>
+        <input type="text" id="ctx" placeholder="e.g. startup founder, marketing manager at a B2B SaaS company" />
+      </div>
+      <div class="field">
+        <div class="field-label">Audience — who reads the output?</div>
+        <input type="text" id="audience" placeholder="e.g. non-technical executives, college students, myself" />
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="step-dot dot-2">2</div>
+        <div class="card-title">Task & Output</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Task — what do you need? (required)</div>
+        <textarea id="task" placeholder="e.g. Write a cold outreach email to enterprise CFOs about our ROI calculator"></textarea>
+      </div>
+      <div class="field">
+        <div class="field-label">Format</div>
+        <div class="pills" id="fmt-pills">
+          <div class="pill" data-color="green" data-val="bullet list">Bullet list</div>
+          <div class="pill" data-color="green" data-val="numbered steps">Numbered steps</div>
+          <div class="pill" data-color="green" data-val="paragraph">Paragraph</div>
+          <div class="pill" data-color="green" data-val="table">Table</div>
+          <div class="pill" data-color="green" data-val="email">Email</div>
+          <div class="pill" data-color="green" data-val="executive memo">Memo</div>
+          <div class="pill" data-color="green" data-val="code">Code</div>
+        </div>
+        <input type="text" id="fmt-custom" placeholder="or type a custom format…" style="margin-top:8px;" />
+      </div>
+      <div class="field">
+        <div class="field-label">Length</div>
+        <input type="text" id="length" placeholder="e.g. under 150 words, 3–5 sentences, one page" />
+      </div>
+      <div class="field">
+        <div class="field-label">Tone</div>
+        <div class="pills" id="tone-pills">
+          <div class="pill" data-color="purple" data-val="concise and direct" data-single="true">Concise</div>
+          <div class="pill" data-color="purple" data-val="warm and conversational" data-single="true">Warm</div>
+          <div class="pill" data-color="purple" data-val="formal and professional" data-single="true">Formal</div>
+          <div class="pill" data-color="purple" data-val="persuasive" data-single="true">Persuasive</div>
+          <div class="pill" data-color="purple" data-val="educational" data-single="true">Educational</div>
+          <div class="pill" data-color="purple" data-val="bold and punchy" data-single="true">Bold</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="step-dot dot-3">3</div>
+        <div class="card-title">Constraints & Examples</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Must include (do this)</div>
+        <textarea id="dos" placeholder="e.g. cite 2 specific numbers, open with a question, include a clear CTA"></textarea>
+      </div>
+      <div class="field">
+        <div class="field-label">Must avoid (don't do this)</div>
+        <textarea id="donts" placeholder="e.g. no jargon, don't mention competitors, avoid passive voice"></textarea>
+      </div>
+      <div class="field">
+        <div class="field-label">Style reference / example</div>
+        <textarea id="example" placeholder="Paste a sample you want it to match, or describe the reference"></textarea>
+      </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="step-dot dot-4">4</div>
+        <div class="card-title">Reasoning Mode</div>
+      </div>
+      <div class="mode-grid" id="mode-cards">
+        <div class="mode-card" data-mode="zero-shot">
+          <div class="mode-name">Zero-shot</div>
+          <div class="mode-desc">Simple & direct. No examples. Good for quick tasks.</div>
+        </div>
+        <div class="mode-card" data-mode="one-shot">
+          <div class="mode-name">One-shot</div>
+          <div class="mode-desc">Adds your single example so AI mirrors your style.</div>
+        </div>
+        <div class="mode-card" data-mode="few-shot">
+          <div class="mode-name">Few-shot</div>
+          <div class="mode-desc">3+ examples. Locks in your voice, reduces errors.</div>
+        </div>
+        <div class="mode-card" data-mode="chain-of-thought">
+          <div class="mode-name">Chain-of-thought</div>
+          <div class="mode-desc">Forces step-by-step reasoning. Best for analysis.</div>
+        </div>
+        <div class="mode-card" style="grid-column:1/-1;" data-mode="agent">
+          <div class="mode-name">Agent chain</div>
+          <div class="mode-desc">Research → Analyze → Write. Best for complex multi-step tasks.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: Output -->
+  <div class="output-col">
+
+    <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--surface2);border:1px solid rgba(26,110,74,0.2);border-radius:var(--radius);">
+      <span style="width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;flex-shrink:0;"></span>
+      <span style="font-size:12px;color:var(--text2);font-family:'DM Sans',sans-serif;">Builds live as you type — no button needed</span>
+    </div>
+
+    <div class="output-card">
+      <div class="output-topbar">
+        <span class="output-title">Your Prompt</span>
+        <span class="char-count" id="char-count">0 chars</span>
+      </div>
+      <div class="output-body" id="output">Your generated prompt will appear here. Fill in the fields and click Generate.</div>
+    </div>
+
+    <div class="action-grid">
+      <button class="btn-action btn-copy" id="copy-btn" onclick="copyPrompt()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        Copy to Clipboard
+      </button>
+    </div>
+
+    <div class="destinations">
+      <div class="dest-label">Open in AI chatbot</div>
+
+      <button class="btn-dest" onclick="openAI('https://claude.ai/new')">
+        <div class="dest-icon" style="background:#f0ebff;">🟣</div>
+        <div class="dest-info">
+          <div class="dest-name">Claude</div>
+          <div class="dest-url">claude.ai</div>
+        </div>
+        <span class="dest-arrow">↗</span>
+      </button>
+
+      <button class="btn-dest" onclick="openAI('https://chat.openai.com/')">
+        <div class="dest-icon" style="background:#f0fdf4;">🟢</div>
+        <div class="dest-info">
+          <div class="dest-name">ChatGPT</div>
+          <div class="dest-url">chat.openai.com</div>
+        </div>
+        <span class="dest-arrow">↗</span>
+      </button>
+
+      <button class="btn-dest" onclick="openAI('https://gemini.google.com/')">
+        <div class="dest-icon" style="background:#eff6ff;">🔵</div>
+        <div class="dest-info">
+          <div class="dest-name">Gemini</div>
+          <div class="dest-url">gemini.google.com</div>
+        </div>
+        <span class="dest-arrow">↗</span>
+      </button>
+
+      <button class="btn-dest" onclick="openAI('https://www.perplexity.ai/')">
+        <div class="dest-icon" style="background:#f0fdfa;">🩵</div>
+        <div class="dest-info">
+          <div class="dest-name">Perplexity</div>
+          <div class="dest-url">perplexity.ai</div>
+        </div>
+        <span class="dest-arrow">↗</span>
+      </button>
+
+      <button class="btn-dest" onclick="openAI('https://copilot.microsoft.com/')">
+        <div class="dest-icon" style="background:#eff6ff;">🔷</div>
+        <div class="dest-info">
+          <div class="dest-name">Microsoft Copilot</div>
+          <div class="dest-url">copilot.microsoft.com</div>
+        </div>
+        <span class="dest-arrow">↗</span>
+      </button>
+
+      <button class="btn-dest" onclick="openAI('https://www.meta.ai/')">
+        <div class="dest-icon" style="background:#fff7ed;">🟠</div>
+        <div class="dest-info">
+          <div class="dest-name">Meta AI</div>
+          <div class="dest-url">meta.ai</div>
+        </div>
+        <span class="dest-arrow">↗</span>
+      </button>
+
+    </div>
+
+    <p style="font-size:11px; color: var(--text3); text-align:center; line-height:1.5;">
+      Tip: The AI buttons copy your prompt then open the chatbot.<br>Paste with Ctrl+V / ⌘V when you get there.
+    </p>
+
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const modeInstructions = {
+  "zero-shot": "",
+  "one-shot": "\n\nHere is one example of the output style I want:\n[PASTE EXAMPLE HERE]",
+  "few-shot": "\n\nHere are 3 examples of the output style and tone I want:\n1. [EXAMPLE 1]\n2. [EXAMPLE 2]\n3. [EXAMPLE 3]\n\nIdentify the patterns in these examples before you begin writing.",
+  "chain-of-thought": "\n\nBefore producing the final output, work through this:\n1. List the 2–3 most important things to get right for this task.\n2. Explain your reasoning for each point.\n3. Then produce the final output.\n\nShow every step. Do not skip ahead to the answer.",
+  "agent": "\n\nWork through this in three structured phases:\nPhase 1 — Research: Gather all relevant context and information on the topic.\nPhase 2 — Analyze: Cross-reference findings and identify the 2–3 most important insights.\nPhase 3 — Write: Produce the final output based on your analysis.\n\nLabel each phase clearly in your response."
+};
+
+function getActive(containerId) {
+  return [...document.querySelectorAll('#' + containerId + ' .pill[class*="active"]')]
+    .map(p => p.dataset.val).filter(Boolean).join(', ');
+}
+
+function getMode() {
+  const c = document.querySelector('.mode-card.active');
+  return c ? c.dataset.mode : null;
+}
+
+function buildPrompt() {
+  const role     = document.getElementById('role').value.trim();
+  const ctx      = document.getElementById('ctx').value.trim();
+  const audience = document.getElementById('audience').value.trim();
+  const task     = document.getElementById('task').value.trim();
+  const fmtPills = getActive('fmt-pills');
+  const fmtCustom= document.getElementById('fmt-custom').value.trim();
+  const fmt      = [fmtPills, fmtCustom].filter(Boolean).join(', ');
+  const length   = document.getElementById('length').value.trim();
+  const tone     = getActive('tone-pills');
+  const dos      = document.getElementById('dos').value.trim();
+  const donts    = document.getElementById('donts').value.trim();
+  const example  = document.getElementById('example').value.trim();
+  const mode     = getMode();
+
+  const outputEl = document.getElementById('output');
+
+  if (!role && !ctx && !task && !audience && !fmt && !length && !tone && !dos && !donts && !example) {
+    outputEl.textContent = 'Your generated prompt will appear here. Fill in the fields and it builds live.';
+    outputEl.classList.remove('has-content');
+    document.getElementById('char-count').textContent = '0 chars';
+    return;
+  }
+
+  let parts = [];
+
+  if (role)     parts.push('You are a ' + role + '.');
+  if (ctx)      parts.push('I am ' + ctx + '.');
+  if (audience) parts.push('The audience for this output is: ' + audience + '.');
+
+  if (task) parts.push('\nTask:\n' + task);
+
+  let specs = [];
+  if (fmt)    specs.push('Format: ' + fmt);
+  if (length) specs.push('Length: ' + length);
+  if (tone)   specs.push('Tone: ' + tone);
+  if (specs.length) parts.push('\n' + specs.join('\n'));
+
+  if (dos)     parts.push('\nMust include:\n' + dos.split('\n').map(l => '• ' + l).join('\n'));
+  if (donts)   parts.push('\nMust avoid:\n'   + donts.split('\n').map(l => '• ' + l).join('\n'));
+  if (example) parts.push('\nStyle reference / example:\n' + example);
+
+  if (mode && modeInstructions[mode]) parts.push(modeInstructions[mode]);
+
+  const prompt = parts.join('\n');
+  outputEl.textContent = prompt;
+  outputEl.classList.add('has-content');
+  document.getElementById('char-count').textContent = prompt.length.toLocaleString() + ' chars';
+}
+
+// Wire all text inputs and textareas to live-update
+document.querySelectorAll('input[type=text], textarea').forEach(el => {
+  el.addEventListener('input', buildPrompt);
+});
+
+// Multi-select pills (format)
+document.querySelectorAll('#fmt-pills .pill').forEach(p => {
+  p.addEventListener('click', () => {
+    p.classList.toggle('active-' + p.dataset.color);
+    buildPrompt();
+  });
+});
+
+// Single-select pills (tone)
+document.querySelectorAll('#tone-pills .pill').forEach(p => {
+  p.addEventListener('click', () => {
+    document.querySelectorAll('#tone-pills .pill').forEach(x => x.className = 'pill');
+    p.classList.add('active-' + p.dataset.color);
+    buildPrompt();
+  });
+});
+
+// Mode cards
+document.querySelectorAll('.mode-card').forEach(c => {
+  c.addEventListener('click', () => {
+    document.querySelectorAll('.mode-card').forEach(x => x.classList.remove('active'));
+    c.classList.add('active');
+    buildPrompt();
+  });
+});
+
+function copyPrompt() {
+  const text = document.getElementById('output').textContent;
+  if (!document.getElementById('output').classList.contains('has-content')) {
+    showToast('Start filling in the form first.');
+    return;
+  }
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.classList.add('success');
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Copied!`;
+    setTimeout(() => {
+      btn.classList.remove('success');
+      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy to Clipboard`;
+    }, 2000);
+  });
+}
+
+function openAI(url) {
+  const text = document.getElementById('output').textContent;
+  const hasContent = document.getElementById('output').classList.contains('has-content');
+  if (hasContent && text) {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('Prompt copied — paste it when you arrive!');
+      setTimeout(() => window.open(url, '_blank'), 600);
+    }).catch(() => {
+      window.open(url, '_blank');
+    });
+  } else {
+    showToast('Fill in the form first.');
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+
+</body>
+</html>
