@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ATS Job Hack — Tech Resume Prompt Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Epilogue:wght@300;400;500;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:      #f5f2eb;
+  --bg2:     #ffffff;
+  --bg3:     #edeae0;
+  --bg4:     #e4e0d4;
+  --border:  rgba(26,24,20,0.1);
+  --border2: rgba(26,24,20,0.18);
+  --border3: rgba(26,24,20,0.28);
+  --text:    #1a1814;
+  --text2:   #4a4640;
+  --text3:   #8a847a;
+
+  --orange:  #f56e28;
+  --orange-bg:  rgba(245,110,40,0.1);
+  --orange-bdr: rgba(245,110,40,0.3);
+
+  --cyan:    #22d3c8;
+  --cyan-bg:    rgba(34,211,200,0.08);
+  --cyan-bdr:   rgba(34,211,200,0.25);
+
+  --lime:    #84cc16;
+  --lime-bg:    rgba(132,204,22,0.08);
+  --lime-bdr:   rgba(132,204,22,0.25);
+
+  --violet:  #a78bfa;
+  --violet-bg:  rgba(167,139,250,0.08);
+  --violet-bdr: rgba(167,139,250,0.25);
+
+  --rose:    #fb7185;
+  --rose-bg:    rgba(251,113,133,0.08);
+  --rose-bdr:   rgba(251,113,133,0.25);
+
+  --sky:     #38bdf8;
+  --sky-bg:     rgba(56,189,248,0.08);
+  --sky-bdr:    rgba(56,189,248,0.25);
+
+  --green:  #1a6e4a;
+  --green-bg:  rgba(26,110,74,0.07);
+  --green-bdr: rgba(26,110,74,0.22);
+
+  --amber:  #92600a;
+  --amber-bg:  rgba(146,96,10,0.07);
+  --amber-bdr: rgba(146,96,10,0.22);
+
+  --r: 8px;
+  --rl: 14px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+
+body{
+  font-family:'Epilogue',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  line-height:1.6;
+}
+
+/* Grain overlay */
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  opacity:0.4;
+}
+
+/* Top accent line */
+body::after{
+  content:'';position:fixed;top:0;left:0;right:0;height:2px;z-index:200;
+  background:linear-gradient(90deg,var(--orange),var(--cyan),var(--lime));
+}
+
+.app{
+  position:relative;z-index:1;
+  max-width:1160px;margin:0 auto;
+  padding:2.5rem 1.5rem 6rem;
+  display:grid;
+  grid-template-columns:1fr 420px;
+  gap:2rem;
+  align-items:start;
+}
+
+/* ── Header ── */
+header{
+  grid-column:1/-1;
+  display:flex;align-items:center;justify-content:space-between;
+  padding-bottom:1.75rem;
+  border-bottom:1px solid var(--border2);
+  margin-bottom:0.25rem;
+  gap:1rem;
+}
+
+.logo{display:flex;align-items:center;gap:14px;}
+.logo-mark{
+  width:44px;height:44px;
+  background:var(--orange);
+  border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;
+  font-family:'JetBrains Mono',monospace;
+  font-weight:700;font-size:10px;
+  color:#ffffff;
+  letter-spacing:0.05em;line-height:1.3;
+  text-align:center;
+}
+
+.logo-text h1{
+  font-family:'Epilogue',sans-serif;
+  font-size:22px;font-weight:900;
+  color:var(--text);letter-spacing:-0.03em;
+}
+.logo-text h1 span{color:var(--orange);}
+.logo-text p{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;font-weight:400;
+  color:var(--text3);margin-top:3px;
+  letter-spacing:0.06em;
+}
+
+.header-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+
+.hbadge{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;font-weight:500;
+  padding:5px 12px;border-radius:20px;
+  border:1px solid;letter-spacing:0.05em;
+}
+.hbadge-live{
+  color:var(--green);
+  border-color:var(--green-bdr);
+  background:var(--green-bg);
+  display:flex;align-items:center;gap:6px;
+}
+.hbadge-live .dot{
+  width:5px;height:5px;border-radius:50%;
+  background:var(--green);
+  animation:pulse 2s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.25}}
+
+.hbadge-ver{color:var(--text3);border-color:var(--border2);background:var(--bg3);}
+
+/* ── Layout columns ── */
+.form-col{display:flex;flex-direction:column;gap:1.25rem;}
+.output-col{position:sticky;top:1.5rem;display:flex;flex-direction:column;gap:1rem;}
+
+/* ── Cards ── */
+.card{
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:var(--rl);
+  padding:1.25rem;
+  transition:border-color 0.2s;
+}
+.card:focus-within{border-color:var(--border2);}
+
+/* card accent top-border */
+.card.c-orange{border-top:2px solid var(--orange);}
+.card.c-cyan  {border-top:2px solid var(--cyan);}
+.card.c-lime  {border-top:2px solid var(--lime);}
+.card.c-violet{border-top:2px solid var(--violet);}
+.card.c-rose  {border-top:2px solid var(--rose);}
+.card.c-sky   {border-top:2px solid var(--sky);}
+
+.card-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:1rem;}
+
+.step-num{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;font-weight:700;
+  width:28px;height:28px;border-radius:7px;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.sn-orange{background:var(--orange-bg);color:var(--orange);border:1px solid var(--orange-bdr);}
+.sn-cyan  {background:var(--cyan-bg);  color:var(--cyan);  border:1px solid var(--cyan-bdr);}
+.sn-lime  {background:var(--lime-bg);  color:var(--lime);  border:1px solid var(--lime-bdr);}
+.sn-violet{background:var(--violet-bg);color:var(--violet);border:1px solid var(--violet-bdr);}
+.sn-rose  {background:var(--rose-bg);  color:var(--rose);  border:1px solid var(--rose-bdr);}
+.sn-sky   {background:var(--sky-bg);   color:var(--sky);   border:1px solid var(--sky-bdr);}
+
+.card-title{
+  font-family:'Epilogue',sans-serif;
+  font-size:13.5px;font-weight:700;
+  color:var(--text);letter-spacing:-0.01em;
+}
+.card-sub{font-size:11.5px;color:var(--text3);font-weight:300;margin-top:3px;line-height:1.45;}
+
+/* ── Fields ── */
+.field{margin-bottom:.875rem;}
+.field:last-child{margin-bottom:0;}
+
+.field-label{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;font-weight:500;color:var(--text3);
+  text-transform:uppercase;letter-spacing:.1em;
+  margin-bottom:7px;display:flex;align-items:center;gap:7px;
+}
+.field-label .hint{
+  font-family:'Epilogue',sans-serif;
+  font-size:10.5px;color:var(--text3);text-transform:none;
+  letter-spacing:0;font-weight:300;font-style:italic;
+}
+
+input[type=text],textarea{
+  width:100%;
+  background:var(--bg3);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  color:var(--text);
+  font-family:'Epilogue',sans-serif;
+  font-size:13.5px;font-weight:400;
+  padding:9px 13px;outline:none;
+  transition:border-color .2s,background .2s;
+  resize:vertical;
+}
+input[type=text]:focus,textarea:focus{
+  border-color:var(--orange-bdr);
+  background:var(--bg4);
+}
+input::placeholder,textarea::placeholder{
+  color:var(--text3);font-weight:300;
+}
+textarea{min-height:80px;line-height:1.55;}
+
+/* ── Pills ── */
+.pills{display:flex;flex-wrap:wrap;gap:6px;}
+.pill{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;font-weight:400;
+  padding:5px 12px;border-radius:5px;
+  cursor:pointer;border:1px solid var(--border2);
+  background:var(--bg3);color:var(--text2);
+  transition:all .15s;user-select:none;white-space:nowrap;
+}
+.pill:hover{border-color:var(--border3);color:var(--text);}
+.pill.a-orange{background:var(--orange-bg);border-color:var(--orange-bdr);color:var(--orange);}
+.pill.a-cyan  {background:var(--cyan-bg);  border-color:var(--cyan-bdr);  color:var(--cyan);}
+.pill.a-lime  {background:var(--lime-bg);  border-color:var(--lime-bdr);  color:var(--lime);}
+.pill.a-violet{background:var(--violet-bg);border-color:var(--violet-bdr);color:var(--violet);}
+.pill.a-rose  {background:var(--rose-bg);  border-color:var(--rose-bdr);  color:var(--rose);}
+.pill.a-sky   {background:var(--sky-bg);   border-color:var(--sky-bdr);   color:var(--sky);}
+
+/* ── Lane grid ── */
+.lane-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;}
+.lane-card{
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--r);padding:10px 10px;
+  cursor:pointer;transition:all .15s;user-select:none;text-align:center;
+}
+.lane-card:hover{border-color:var(--border2);}
+.lane-card.active{background:var(--orange-bg);border-color:var(--orange-bdr);}
+.lane-card .lc-icon{font-size:16px;margin-bottom:4px;}
+.lane-card .lc-name{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9.5px;font-weight:500;
+  color:var(--text2);line-height:1.4;
+}
+.lane-card.active .lc-name{color:var(--orange);}
+
+/* ── Mode grid ── */
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.mode-card{
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--r);padding:10px 12px;
+  cursor:pointer;transition:all .15s;user-select:none;
+}
+.mode-card:hover{border-color:var(--border2);}
+.mode-card.active{background:var(--violet-bg);border-color:var(--violet-bdr);}
+.mode-card .mc-name{
+  font-family:'Epilogue',sans-serif;
+  font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px;
+}
+.mode-card.active .mc-name{color:var(--violet);}
+.mode-card .mc-desc{font-size:10.5px;color:var(--text3);font-weight:300;line-height:1.4;}
+
+/* ── Avoid grid ── */
+.avoid-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.avoid-card{
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--r);padding:9px 11px;
+  cursor:pointer;transition:all .15s;user-select:none;
+}
+.avoid-card:hover{border-color:var(--border2);}
+.avoid-card.active{background:var(--rose-bg);border-color:var(--rose-bdr);}
+.avoid-card .av-name{
+  font-size:11.5px;font-weight:600;color:var(--text);margin-bottom:2px;
+}
+.avoid-card.active .av-name{color:var(--rose);}
+.avoid-card .av-desc{font-size:10px;color:var(--text3);font-weight:300;line-height:1.35;}
+
+/* ── Toggle ── */
+.toggle-row{display:flex;align-items:center;gap:10px;margin-bottom:.65rem;}
+.toggle-row:last-child{margin-bottom:0;}
+.toggle-label{font-size:12.5px;color:var(--text2);font-weight:400;flex:1;}
+.toggle{
+  width:36px;height:19px;background:var(--bg4);
+  border-radius:10px;border:1px solid var(--border2);
+  cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;
+}
+.toggle.on{background:var(--green);border-color:var(--green);}
+.toggle::after{
+  content:'';position:absolute;left:2px;top:2px;
+  width:13px;height:13px;border-radius:50%;background:white;
+  transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.3);
+}
+.toggle.on::after{transform:translateX(17px);}
+
+/* ── Info box ── */
+.info-box{
+  border-radius:var(--r);padding:10px 13px;
+  font-size:11.5px;font-weight:400;line-height:1.5;
+  margin-bottom:1rem;
+  font-family:'JetBrains Mono',monospace;
+}
+.ib-orange{background:var(--orange-bg);border:1px solid var(--orange-bdr);color:var(--orange);}
+.ib-cyan  {background:var(--cyan-bg);  border:1px solid var(--cyan-bdr);  color:var(--cyan);}
+.ib-lime  {background:var(--lime-bg);  border:1px solid var(--lime-bdr);  color:var(--lime);}
+.ib-violet{background:var(--violet-bg);border:1px solid var(--violet-bdr);color:var(--violet);}
+
+/* ── Section label ── */
+.sec-label{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9.5px;font-weight:500;
+  text-transform:uppercase;letter-spacing:.12em;
+  color:var(--text3);margin-bottom:.75rem;
+  display:flex;align-items:center;gap:8px;
+}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* ── Pro tip ── */
+.pro-tip{
+  background:var(--bg3);
+  border:1px solid var(--border2);
+  border-left:3px solid var(--orange);
+  border-radius:0 var(--r) var(--r) 0;
+  padding:12px 14px;
+  font-size:12px;color:var(--text2);line-height:1.6;
+}
+.pro-tip strong{color:var(--orange);font-weight:600;}
+.output-tabs{
+  display:grid;grid-template-columns:1fr 1fr;
+  background:var(--bg3);border-radius:var(--r);
+  border:1px solid var(--border);padding:3px;gap:3px;
+}
+.output-tab{
+  padding:7px 10px;border-radius:6px;text-align:center;
+  font-family:'JetBrains Mono',monospace;
+  font-size:10.5px;font-weight:500;letter-spacing:.04em;
+  color:var(--text3);cursor:pointer;transition:all .15s;user-select:none;
+}
+.output-tab.active{
+  background:var(--bg4);color:var(--text);
+  box-shadow:0 1px 4px rgba(0,0,0,.4);
+}
+
+.output-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--rl);overflow:hidden;
+}
+.output-topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px;border-bottom:1px solid var(--border);
+  background:var(--bg3);
+}
+.output-title{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10.5px;font-weight:500;
+  color:var(--text2);letter-spacing:.05em;
+}
+.char-count{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;color:var(--text3);
+}
+.output-body{
+  padding:14px;font-size:12px;font-weight:300;
+  color:var(--text3);line-height:1.7;
+  min-height:200px;max-height:370px;overflow-y:auto;
+  white-space:pre-wrap;word-break:break-word;
+}
+.output-body.has-content{color:var(--text2);}
+.output-body::-webkit-scrollbar{width:3px;}
+.output-body::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:2px;}
+
+/* ── Buttons ── */
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.btn{
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  padding:10px 14px;border-radius:var(--r);
+  font-family:'Epilogue',sans-serif;font-size:12.5px;font-weight:600;
+  cursor:pointer;transition:all .15s;border:1px solid;
+}
+.btn-primary{background:var(--orange);color:#fff;border-color:var(--orange);}
+.btn-primary:hover{background:#d85e20;}
+.btn-primary.success{background:var(--green);border-color:var(--green);color:#fff;}
+.btn-ghost{background:transparent;color:var(--text2);border-color:var(--border2);}
+.btn-ghost:hover{border-color:var(--border3);color:var(--text);}
+
+/* Save/Load section */
+.save-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;}
+.btn-save{background:var(--bg3);color:var(--cyan);border-color:var(--cyan-bdr);}
+.btn-save:hover{background:var(--cyan-bg);}
+.btn-load{background:var(--bg3);color:var(--violet);border-color:var(--violet-bdr);}
+.btn-load:hover{background:var(--violet-bg);}
+.btn-export{background:var(--bg3);color:var(--amber);border-color:var(--amber-bdr);}
+.btn-export:hover{background:var(--amber-bg);}
+
+/* Hidden file input */
+#file-import{display:none;}
+
+/* ── Destinations ── */
+.dest-label{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9.5px;font-weight:500;color:var(--text3);
+  text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;
+}
+.btn-dest{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 12px;background:var(--bg3);
+  border:1px solid var(--border);border-radius:var(--r);
+  cursor:pointer;transition:border-color .15s;text-align:left;width:100%;
+}
+.btn-dest:hover{border-color:var(--border2);}
+.dest-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.dest-info{flex:1;}
+.dest-name{font-size:12.5px;font-weight:600;color:var(--text);}
+.dest-url{font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--text3);}
+.dest-arrow{font-size:13px;color:var(--text3);}
+
+/* ── Toast ── */
+.toast{
+  position:fixed;bottom:2rem;left:50%;
+  transform:translateX(-50%) translateY(80px);
+  background:var(--text);color:#f5f2eb;
+  border:1px solid var(--border2);
+  font-family:'JetBrains Mono',monospace;
+  font-size:11.5px;padding:10px 20px;
+  border-radius:6px;opacity:0;
+  transition:all .25s;z-index:1000;white-space:nowrap;
+  box-shadow:0 4px 16px rgba(26,24,20,.15);
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ── Destinations container ── */
+.dests{display:flex;flex-direction:column;gap:6px;}
+
+/* ── Responsive ── */
+@media(max-width:900px){
+  .app{grid-template-columns:1fr;}
+  .output-col{position:static;}
+  header{flex-direction:column;align-items:flex-start;gap:10px;}
+  .lane-grid{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+<!-- ══ HEADER ══ -->
+<header>
+  <div class="logo">
+    <div class="logo-mark">ATS<br>HACK</div>
+    <div class="logo-text">
+      <h1>ATS Job <span>Hack</span></h1>
+      <p>// ANTI-AI-FLUFF RESUME PROMPT BUILDER — TECH EDITION</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="hbadge hbadge-live"><span class="dot"></span>LIVE BUILD</div>
+    <div class="hbadge hbadge-ver">v2.0 · TECH EDITION</div>
+  </div>
+</header>
+
+<!-- ══ FORM COLUMN ══ -->
+<div class="form-col">
+
+  <!-- ── 0. PROFILE ── -->
+  <div class="card c-orange">
+    <div class="card-header">
+      <div class="step-num sn-orange">✦</div>
+      <div>
+        <div class="card-title">Your Profile</div>
+        <div class="card-sub">Tell the AI who you are. The more specific, the sharper the output.</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="field-label">Current / Most Recent Title</div>
+      <input type="text" id="title" placeholder="e.g. Software Engineer, Cloud Security Analyst, DevOps Engineer"/>
+    </div>
+    <div class="field">
+      <div class="field-label">Industry / Company Type</div>
+      <input type="text" id="industry" placeholder="e.g. FinTech SaaS, Healthcare, Enterprise Cloud, Cybersecurity startup"/>
+    </div>
+    <div class="field">
+      <div class="field-label">Core Tech Stack <span class="hint">be specific — name real tools</span></div>
+      <input type="text" id="tools" placeholder="e.g. AWS, Terraform, Kubernetes, Python, Splunk, CrowdStrike"/>
+    </div>
+    <div class="field">
+      <div class="field-label">Frameworks / Standards</div>
+      <input type="text" id="frameworks" placeholder="e.g. NIST, SOC 2, OWASP, HIPAA, CIS, ISO 27001, 12-Factor"/>
+    </div>
+    <div class="field">
+      <div class="field-label">Years of Experience</div>
+      <input type="text" id="yoe" placeholder="e.g. 4 years"/>
+    </div>
+    <div class="field">
+      <div class="field-label">Target Level</div>
+      <div class="pills" id="level-pills">
+        <span class="pill" data-val="Junior (0–2 yrs)" data-col="orange">Junior</span>
+        <span class="pill a-orange" data-val="Mid-level (3–5 yrs)" data-col="orange">Mid-level</span>
+        <span class="pill" data-val="Senior (6–10 yrs)" data-col="orange">Senior</span>
+        <span class="pill" data-val="Staff / Principal" data-col="orange">Staff / Principal</span>
+        <span class="pill" data-val="Engineering Manager" data-col="orange">EM</span>
+      </div>
+    </div>
+
+    <div class="field" style="margin-top:0.75rem;">
+      <div class="field-label">Paste Your Current Resume <span class="hint">optional but highly recommended</span></div>
+      <textarea id="resume-paste" style="min-height:120px;" placeholder="Paste your resume text here — bullets, summary, skills. The AI rewrites your actual content, not a hypothetical version."></textarea>
+    </div>
+  </div>
+
+  <!-- ── TASK 1: DIAGNOSE ── -->
+  <div class="card c-orange">
+    <div class="card-header">
+      <div class="step-num sn-orange">01</div>
+      <div>
+        <div class="card-title">Diagnose Weaknesses</div>
+        <div class="card-sub">Surface the bullets that sound like everyone else's resume — be direct, no softening</div>
+      </div>
+    </div>
+    <div class="info-box ib-orange">TOP 5 WEAKEST BULLETS → exact reason why each fails: no technical depth / no specificity / no proof of real work</div>
+    <div class="field">
+      <div class="field-label">Focus Area</div>
+      <div class="pills" id="diagnose-pills">
+        <span class="pill a-orange" data-val="all sections" data-col="orange">All</span>
+        <span class="pill" data-val="experience bullets only" data-col="orange">Experience</span>
+        <span class="pill" data-val="professional summary" data-col="orange">Summary</span>
+        <span class="pill" data-val="skills section" data-col="orange">Skills</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TASK 2: PROOF BULLETS ── -->
+  <div class="card c-cyan">
+    <div class="card-header">
+      <div class="step-num sn-cyan">02</div>
+      <div>
+        <div class="card-title">Rewrite: Technical Proof Bullets</div>
+        <div class="card-sub">Rebuild bullets so they couldn't be lifted by another candidate</div>
+      </div>
+    </div>
+    <div class="info-box ib-cyan">System/Env → Problem/Risk → Exact Technical Action → Tools → Impact. No "responsible for." No "worked on."</div>
+
+    <div class="field">
+      <div class="field-label">Weakest Bullet to Rewrite <span class="hint">paste it — get a focused before/after</span></div>
+      <textarea id="weak-bullet" placeholder="e.g. Responsible for managing infrastructure and improving system reliability across environments"></textarea>
+    </div>
+    <div class="field">
+      <div class="field-label">Tool(s) Used</div>
+      <input type="text" id="bullet-tool" placeholder="e.g. Terraform, AWS, Datadog, PagerDuty"/>
+    </div>
+    <div class="field">
+      <div class="field-label">Scope / Environment</div>
+      <input type="text" id="bullet-scope" placeholder="e.g. 15-service microservices platform, 99.95% uptime SLA, 3M daily users"/>
+    </div>
+    <div class="field">
+      <div class="field-label">Result <span class="hint">non-round numbers = more credible</span></div>
+      <input type="text" id="bullet-result" placeholder="e.g. reduced P1 incidents by 63%, cut deploy time from 47 min to 8 min"/>
+    </div>
+    <div class="field">
+      <div class="field-label">Constraint / Context Only You Know</div>
+      <input type="text" id="bullet-context" placeholder="e.g. had to migrate without any downtime during peak traffic window"/>
+    </div>
+    <div class="field">
+      <div class="field-label">Optimize For</div>
+      <div class="pills" id="funnel-pills">
+        <span class="pill a-cyan" data-val="ATS keyword parsing" data-col="cyan">ATS</span>
+        <span class="pill" data-val="human recruiter 6-second scan" data-col="cyan">Human Recruiter</span>
+        <span class="pill" data-val="technical interview verification" data-col="cyan">Tech Interview</span>
+        <span class="pill" data-val="all three stages" data-col="cyan">All Three</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TASK 3: AUTHENTICITY ── -->
+  <div class="card c-lime">
+    <div class="card-header">
+      <div class="step-num sn-lime">03</div>
+      <div>
+        <div class="card-title">Add Authenticity Signals</div>
+        <div class="card-sub">What makes your experience real — constraints, architecture decisions, operational context</div>
+      </div>
+    </div>
+    <div class="field">
+      <div class="field-label">Key Win to Highlight</div>
+      <input type="text" id="key-win" placeholder="e.g. reduced cloud spend by $180k/yr, shipped zero-downtime migration, 0 critical CVEs in 18 months"/>
+    </div>
+    <div class="field">
+      <div class="field-label">Architecture / Trade-off Context</div>
+      <input type="text" id="arch-ctx" placeholder="e.g. chose event-driven over synchronous to handle 10x traffic spikes without scaling costs"/>
+    </div>
+    <div class="field">
+      <div class="field-label">Domain-Specific Context <span class="hint">what makes your industry unique</span></div>
+      <input type="text" id="domain-ctx" placeholder="e.g. PHI data handling requirements, PCI-DSS scope, air-gapped deployment, real-time trading latency"/>
+    </div>
+    <div class="field">
+      <div class="field-label">Signals to Strengthen</div>
+      <div class="pills" id="auth-pills">
+        <span class="pill a-lime" data-val="named tools and platforms" data-col="lime">Named Tools</span>
+        <span class="pill a-lime" data-val="architecture context" data-col="lime">Architecture</span>
+        <span class="pill a-lime" data-val="operational scale and impact" data-col="lime">Scale & Impact</span>
+        <span class="pill" data-val="trade-offs and technical decisions" data-col="lime">Trade-offs</span>
+        <span class="pill" data-val="team and cross-functional context" data-col="lime">Team Context</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TASK 4: POSITIONING LANE ── -->
+  <div class="card c-violet">
+    <div class="card-header">
+      <div class="step-num sn-violet">04</div>
+      <div>
+        <div class="card-title">Pick One Lane</div>
+        <div class="card-sub">Your single strongest market position — summary and bullets align to this</div>
+      </div>
+    </div>
+    <div class="info-box ib-violet">Trying to be everything reads as nothing. One clear lane = faster recruiter recognition.</div>
+
+    <div class="lane-grid" id="lane-cards">
+      <div class="lane-card active" data-lane="Software / Backend Engineer">
+        <div class="lc-icon">⚙️</div>
+        <div class="lc-name">Software / Backend Eng</div>
+      </div>
+      <div class="lane-card" data-lane="Cloud / Infrastructure Engineer">
+        <div class="lc-icon">☁️</div>
+        <div class="lc-name">Cloud / Infra Eng</div>
+      </div>
+      <div class="lane-card" data-lane="DevOps / Platform Engineer">
+        <div class="lc-icon">🔁</div>
+        <div class="lc-name">DevOps / Platform</div>
+      </div>
+      <div class="lane-card" data-lane="Cloud Security / AppSec Engineer">
+        <div class="lc-icon">🔐</div>
+        <div class="lc-name">Cloud Security / AppSec</div>
+      </div>
+      <div class="lane-card" data-lane="Detection & Threat Hunting Engineer">
+        <div class="lc-icon">🎯</div>
+        <div class="lc-name">Detection & Threat Hunting</div>
+      </div>
+      <div class="lane-card" data-lane="Data / ML Engineer">
+        <div class="lc-icon">📊</div>
+        <div class="lc-name">Data / ML Eng</div>
+      </div>
+      <div class="lane-card" data-lane="Site Reliability Engineer (SRE)">
+        <div class="lc-icon">📡</div>
+        <div class="lc-name">SRE</div>
+      </div>
+      <div class="lane-card" data-lane="Full Stack Engineer">
+        <div class="lc-icon">🖥️</div>
+        <div class="lc-name">Full Stack Eng</div>
+      </div>
+      <div class="lane-card" data-lane="DevSecOps Engineer">
+        <div class="lc-icon">🛡️</div>
+        <div class="lc-name">DevSecOps</div>
+      </div>
+    </div>
+
+    <div class="field" style="margin-top:1rem;">
+      <div class="field-label">Custom Lane <span class="hint">overrides selection above</span></div>
+      <input type="text" id="custom-lane" placeholder="e.g. Platform Security Engineer / Identity & Access"/>
+    </div>
+  </div>
+
+  <!-- ── TASK 5: PROJECTS ── -->
+  <div class="card c-sky">
+    <div class="card-header">
+      <div class="step-num sn-sky">05</div>
+      <div>
+        <div class="card-title">Selected Projects / Key Initiatives</div>
+        <div class="card-sub">The section most AI resumes skip — proof that you shipped real things</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="field-label">Project 1</div>
+      <input type="text" id="proj1" placeholder="e.g. Zero-downtime Kafka migration — moved 3 high-throughput services off RabbitMQ with no SLA impact"/>
+    </div>
+    <div class="field">
+      <div class="field-label">Project 2</div>
+      <input type="text" id="proj2" placeholder="e.g. Internal CSPM tooling — built custom Prowler checks for HIPAA gaps across 9 AWS accounts"/>
+    </div>
+    <div class="field">
+      <div class="field-label">Project 3</div>
+      <input type="text" id="proj3" placeholder="e.g. IaC security pipeline — Terraform + Checkov + GitHub Actions, caught 100% of IAM overpermissioning pre-prod"/>
+    </div>
+
+    <div class="field" style="margin-top:0.25rem;">
+      <div class="field-label">External Proof-of-Work Artifact</div>
+      <div class="mode-grid" id="artifact-modes">
+        <div class="mode-card active" data-artifact="github">
+          <div class="mc-name">🛠 GitHub Repo</div>
+          <div class="mc-desc">Detection rules, IaC modules, CLI tools, or custom checks</div>
+        </div>
+        <div class="mode-card" data-artifact="blog">
+          <div class="mc-name">✍ Technical Post</div>
+          <div class="mc-desc">Deep-dive on a real problem you solved — Medium, dev.to, LinkedIn</div>
+        </div>
+        <div class="mode-card" data-artifact="oss">
+          <div class="mc-name">🌐 OSS Contribution</div>
+          <div class="mc-desc">PR or issue to a known project in your stack</div>
+        </div>
+        <div class="mode-card" data-artifact="none">
+          <div class="mc-name">📄 Resume Line Only</div>
+          <div class="mc-desc">Just draft the Projects section bullet — no artifact needed yet</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TASK 6: SCAN TEST + ANTI-PATTERNS ── -->
+  <div class="card c-rose">
+    <div class="card-header">
+      <div class="step-num sn-rose">06</div>
+      <div>
+        <div class="card-title">10-Second Scan + Anti-Patterns</div>
+        <div class="card-sub">Top-of-resume clarity check + the AI resume mistakes getting people filtered out right now</div>
+      </div>
+    </div>
+
+    <div class="sec-label">Anti-patterns to flag and fix</div>
+    <div class="avoid-grid" id="avoid-cards">
+      <div class="avoid-card active" data-avoid="too-perfect">
+        <div class="av-name">Too-Perfect Polish</div>
+        <div class="av-desc">Zero friction = AI flag. Add a real constraint or trade-off.</div>
+      </div>
+      <div class="avoid-card active" data-avoid="overclaiming">
+        <div class="av-name">Overclaiming</div>
+        <div class="av-desc">"Transformed/architected/spearheaded" for IC-level work raises red flags.</div>
+      </div>
+      <div class="avoid-card" data-avoid="generic-opener">
+        <div class="av-name">Generic AI Opener</div>
+        <div class="av-desc">"Results-driven professional with proven track record…" — 40% of resumes.</div>
+      </div>
+      <div class="avoid-card" data-avoid="wrong-voice">
+        <div class="av-name">Wrong Industry Voice</div>
+        <div class="av-desc">Corporate buzzwords instead of real domain/stack terminology.</div>
+      </div>
+      <div class="avoid-card active" data-avoid="round-numbers">
+        <div class="av-name">Only Round Numbers</div>
+        <div class="av-desc">37% reads as measured. 40% reads as invented. Use non-round.</div>
+      </div>
+      <div class="avoid-card" data-avoid="context-free-kw">
+        <div class="av-name">Context-Free Keywords</div>
+        <div class="av-desc">Keywords floating outside real sentences fail modern ATS semantic parsing.</div>
+      </div>
+    </div>
+
+    <div class="sec-label" style="margin-top:1rem;">Quick wins to include</div>
+    <div class="toggle-row">
+      <span class="toggle-label">Voice consistency — flag tone drift across sections</span>
+      <div class="toggle on" id="tog-voice" onclick="toggleWin('voice')"></div>
+    </div>
+    <div class="toggle-row">
+      <span class="toggle-label">3 role-variant versions (different emphasis per JD type)</span>
+      <div class="toggle" id="tog-variants" onclick="toggleWin('variants')"></div>
+    </div>
+    <div class="toggle-row">
+      <span class="toggle-label">Domain-organized skills section structure</span>
+      <div class="toggle on" id="tog-skills" onclick="toggleWin('skills')"></div>
+    </div>
+  </div>
+
+  <!-- ── PRO MOVE ── -->
+  <div class="card c-orange">
+    <div class="card-header">
+      <div class="step-num sn-orange">🔥</div>
+      <div>
+        <div class="card-title">Pro Move — Interview Verification Test</div>
+        <div class="card-sub">The move most people skip. Run this after the main prompt.</div>
+      </div>
+    </div>
+    <div class="pro-tip">
+      <strong>After the AI rewrites your bullets, send this follow-up:</strong><br/><br/>
+      "For each rewritten bullet, give me 2 interview questions a hiring manager would ask to verify this is real work. Then flag any bullet I wouldn't be able to answer confidently from memory."<br/><br/>
+      <strong>Rule:</strong> If you can't answer those questions easily → that bullet still needs more of your real context in it.
+    </div>
+    <div class="field" style="margin-top:0.875rem;">
+      <div class="field-label">Include Verification Test</div>
+      <div class="pills" id="verify-pills">
+        <span class="pill a-orange" data-val="yes" data-col="orange">Yes — append to main prompt</span>
+        <span class="pill" data-val="separate" data-col="orange">No — keep in Follow-up tab</span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /form-col -->
+
+<!-- ══ OUTPUT COLUMN ══ -->
+<div class="output-col">
+
+  <div style="display:flex;align-items:center;gap:7px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);">
+    <span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;animation:pulse 2s ease-in-out infinite;"></span>
+    LIVE — updates as you type
+  </div>
+
+  <div class="output-tabs">
+    <div class="output-tab active" id="tab-main" onclick="switchTab('main')">MAIN PROMPT</div>
+    <div class="output-tab" id="tab-followup" onclick="switchTab('followup')">FOLLOW-UP</div>
+  </div>
+
+  <div class="output-card">
+    <div class="output-topbar">
+      <span class="output-title" id="output-label">MAIN PROMPT</span>
+      <span class="char-count" id="char-count">0 chars</span>
+    </div>
+    <div class="output-body" id="output">Fill in your profile above — your prompt builds here in real time.</div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" id="copy-btn" onclick="copyPrompt()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+      Copy Prompt
+    </button>
+    <button class="btn btn-ghost" onclick="clearFields()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.4"/></svg>
+      Reset
+    </button>
+  </div>
+
+  <!-- Save / Load / Export -->
+  <div>
+    <div class="dest-label" style="margin-bottom:6px;">Profile storage</div>
+    <div class="save-row">
+      <button class="btn btn-save" onclick="saveProfile()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Save
+      </button>
+      <button class="btn btn-load" onclick="loadProfile()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.4"/></svg>
+        Load
+      </button>
+      <button class="btn btn-export" onclick="exportProfile()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export
+      </button>
+    </div>
+    <input type="file" id="file-import" accept=".json" onchange="importProfile(event)"/>
+    <p style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--text3);margin-top:5px;line-height:1.5;">
+      Save stores in browser. Export downloads a .json file you can re-import later or share.
+    </p>
+  </div>
+
+  <!-- AI destinations -->
+  <div class="dests">
+    <div class="dest-label">Open in AI assistant</div>
+    <button class="btn-dest" onclick="openAI('https://claude.ai/new')">
+      <div class="dest-icon" style="background:rgba(139,92,246,0.15);">🟣</div>
+      <div class="dest-info"><div class="dest-name">Claude</div><div class="dest-url">claude.ai</div></div>
+      <span class="dest-arrow">↗</span>
+    </button>
+    <button class="btn-dest" onclick="openAI('https://chat.openai.com/')">
+      <div class="dest-icon" style="background:rgba(16,185,129,0.12);">🟢</div>
+      <div class="dest-info"><div class="dest-name">ChatGPT</div><div class="dest-url">chat.openai.com</div></div>
+      <span class="dest-arrow">↗</span>
+    </button>
+    <button class="btn-dest" onclick="openAI('https://gemini.google.com/')">
+      <div class="dest-icon" style="background:rgba(56,189,248,0.12);">🔵</div>
+      <div class="dest-info"><div class="dest-name">Gemini</div><div class="dest-url">gemini.google.com</div></div>
+      <span class="dest-arrow">↗</span>
+    </button>
+  </div>
+
+  <p style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--text3);text-align:center;line-height:1.6;">
+    AI buttons copy prompt → open assistant<br/>Paste with Ctrl+V / ⌘V on arrival
+  </p>
+
+</div><!-- /output-col -->
+
+</div><!-- /app -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── State ────────────────────────────────────────────────────────
+const S = {
+  level:        'Mid-level (3–5 yrs)',
+  diagnoseArea: 'all sections',
+  funnelStage:  'ATS keyword parsing',
+  authSignals:  ['named tools and platforms','architecture context','operational scale and impact'],
+  lane:         'Software / Backend Engineer',
+  artifact:     'github',
+  avoids:       ['too-perfect','overclaiming','round-numbers'],
+  quickWins:    {voice:true, variants:false, skills:true},
+  verify:       'yes',
+  activeTab:    'main'
+};
+
+// ─── Single-select pills ──────────────────────────────────────────
+function setupSingle(id, key, col, initVal) {
+  document.querySelectorAll(`#${id} .pill`).forEach(p => {
+    p.addEventListener('click', () => {
+      document.querySelectorAll(`#${id} .pill`).forEach(x => x.className = 'pill');
+      p.classList.add('a-' + col);
+      S[key] = p.dataset.val;
+      buildAll();
+    });
+  });
+}
+setupSingle('level-pills','level','orange');
+setupSingle('diagnose-pills','diagnoseArea','orange');
+setupSingle('funnel-pills','funnelStage','cyan');
+setupSingle('verify-pills','verify','orange');
+
+// ─── Multi-select pills ───────────────────────────────────────────
+document.querySelectorAll('#auth-pills .pill').forEach(p => {
+  p.addEventListener('click', () => {
+    const v = p.dataset.val;
+    if (S.authSignals.includes(v)) {
+      S.authSignals = S.authSignals.filter(x => x !== v);
+      p.className = 'pill';
+    } else {
+      S.authSignals.push(v);
+      p.classList.add('a-lime');
+    }
+    buildAll();
+  });
+});
+
+// ─── Lane cards ───────────────────────────────────────────────────
+document.querySelectorAll('#lane-cards .lane-card').forEach(c => {
+  c.addEventListener('click', () => {
+    document.querySelectorAll('#lane-cards .lane-card').forEach(x => x.classList.remove('active'));
+    c.classList.add('active');
+    S.lane = c.dataset.lane;
+    document.getElementById('custom-lane').value = '';
+    buildAll();
+  });
+});
+document.getElementById('custom-lane').addEventListener('input', e => {
+  if (e.target.value.trim()) {
+    document.querySelectorAll('#lane-cards .lane-card').forEach(x => x.classList.remove('active'));
+  }
+  buildAll();
+});
+
+// ─── Artifact cards ───────────────────────────────────────────────
+document.querySelectorAll('#artifact-modes .mode-card').forEach(c => {
+  c.addEventListener('click', () => {
+    document.querySelectorAll('#artifact-modes .mode-card').forEach(x => x.classList.remove('active'));
+    c.classList.add('active');
+    S.artifact = c.dataset.artifact;
+    buildAll();
+  });
+});
+
+// ─── Avoid cards ─────────────────────────────────────────────────
+document.querySelectorAll('#avoid-cards .avoid-card').forEach(c => {
+  c.addEventListener('click', () => {
+    const k = c.dataset.avoid;
+    if (S.avoids.includes(k)) {
+      S.avoids = S.avoids.filter(a => a !== k);
+      c.classList.remove('active');
+    } else {
+      S.avoids.push(k);
+      c.classList.add('active');
+    }
+    buildAll();
+  });
+});
+
+// ─── Toggles ──────────────────────────────────────────────────────
+function toggleWin(key) {
+  S.quickWins[key] = !S.quickWins[key];
+  document.getElementById('tog-' + key).classList.toggle('on', S.quickWins[key]);
+  buildAll();
+}
+
+// ─── Text inputs ──────────────────────────────────────────────────
+document.querySelectorAll('input[type=text], textarea').forEach(el => {
+  el.addEventListener('input', buildAll);
+});
+
+// ─── Tab switching ────────────────────────────────────────────────
+function switchTab(tab) {
+  S.activeTab = tab;
+  document.getElementById('tab-main').classList.toggle('active', tab==='main');
+  document.getElementById('tab-followup').classList.toggle('active', tab==='followup');
+  renderOutput();
+}
+
+// ─── Value helper ─────────────────────────────────────────────────
+function v(id){ return document.getElementById(id).value.trim(); }
+
+// ─── Lookup tables ────────────────────────────────────────────────
+const avoidCopy = {
+  'too-perfect':    'flag and fix the "too-perfect" AI polish signal — add one real constraint, friction, or trade-off to a bullet where everything went smoothly',
+  'overclaiming':   'flag and fix overclaiming language — replace "transformed/architected/spearheaded" with accurate IC-level verbs that match the actual scope of work',
+  'generic-opener': 'flag and rewrite the generic AI opener ("results-driven professional with proven track record") — replace with a specific, role-and-stack-first summary',
+  'wrong-voice':    'flag any corporate buzzword language and replace with real domain/stack terminology appropriate for the role and industry',
+  'round-numbers':  'convert suspiciously round percentages to non-round equivalents (37% not 40%; 2.3x not 2x; 47 min not ~1 hour) — they read as actually measured',
+  'context-free-kw':'embed floating keywords into real operational sentences with technical context — standalone keyword lists fail modern ATS semantic parsing'
+};
+
+const artifactCopy = {
+  github:      'a GitHub repo demonstrating real technical work — detection rules, IaC modules, CLI tools, automation scripts, or custom compliance checks relevant to their stack. Include a README explaining the purpose and design decisions.',
+  blog:        'a technical blog post on a real problem they solved — the approach they took, the trade-offs made, and the outcome. Medium, dev.to, or LinkedIn article format. This signals genuine expertise AI-polished candidates can\'t replicate.',
+  oss:         'an open-source contribution to a project in their tech stack — a PR, issue resolution, or documentation improvement. Even small contributions signal community engagement and real code review experience.',
+  none:        'only the Projects/Publications resume line to add immediately, with no artifact creation required yet'
+};
+
+// ─── Build main prompt ────────────────────────────────────────────
+function buildMainPrompt() {
+  const title     = v('title');
+  const industry  = v('industry');
+  const tools     = v('tools');
+  const frameworks= v('frameworks');
+  const yoe       = v('yoe');
+  const resume    = v('resume-paste');
+  const weakBullet= v('weak-bullet');
+  const bTool     = v('bullet-tool');
+  const bScope    = v('bullet-scope');
+  const bResult   = v('bullet-result');
+  const bCtx      = v('bullet-context');
+  const keyWin    = v('key-win');
+  const archCtx   = v('arch-ctx');
+  const domainCtx = v('domain-ctx');
+  const customLane= v('custom-lane');
+  const proj1     = v('proj1');
+  const proj2     = v('proj2');
+  const proj3     = v('proj3');
+  const lane      = customLane || S.lane;
+
+  const parts = [];
+
+  parts.push(`You are a senior technical recruiter and hiring manager specializing in software engineering, cloud infrastructure, DevOps, and cybersecurity roles.
+
+Your job is NOT to make this resume sound better.
+Your job is to make it stand out in a market where AI-generated resumes all look identical — where clean formatting, keyword matching, and "strong action verbs" are now the baseline, not the edge.
+
+Goal: a resume that is SPECIFIC, AUTHENTIC, and TECHNICALLY CREDIBLE.
+It must pass ATS AND register with a human recruiter in under 10 seconds.`);
+
+  // Profile
+  parts.push(`\n── CANDIDATE PROFILE ──
+Title: ${title || '[fill in your title]'}
+Industry: ${industry || '[fill in your industry]'}
+Experience: ${yoe || '[fill in years]'}
+Tech Stack: ${tools || '[fill in your tools]'}
+Frameworks/Standards: ${frameworks || '[fill in frameworks]'}
+Target Level: ${S.level}`);
+
+  // Task 1
+  parts.push(`\n\n═══ TASK 1 — DIAGNOSE WEAKNESSES (be direct, no softening) ═══
+Identify bullets that sound generic, AI-generated, or interchangeable with any other tech resume.
+Flag where the candidate lacks: technical depth / specificity / proof of real work.
+Identify the top 5 weakest bullets and explain WHY each fails.
+Focus on: ${S.diagnoseArea}`);
+
+  // Task 2
+  parts.push(`\n\n═══ TASK 2 — REWRITE: TECHNICAL PROOF BULLETS ═══
+Rewrite bullets using this structure for each:
+• What system or environment?
+• What problem or risk?
+• What exact technical action was taken?
+• What tools and technologies were used?
+• What changed — impact, scope, or outcome?
+
+Rules:
+• No "responsible for" or "worked on" — describe real actions
+• Use real technical terminology from the candidate's stack
+• Use non-round numbers (63% not 60%; 47 min not ~1 hour) — they read as measured
+• Each bullet must feel impossible to copy by another candidate
+• Optimize for: ${S.funnelStage}`);
+
+  if (weakBullet) {
+    parts.push(`\nSpecific bullet to rewrite:\n"${weakBullet}"`);
+    if (bTool)   parts.push(`Tools: ${bTool}`);
+    if (bScope)  parts.push(`Scope: ${bScope}`);
+    if (bResult) parts.push(`Result: ${bResult}`);
+    if (bCtx)    parts.push(`Unique context: ${bCtx}`);
+    parts.push(`Show BEFORE and AFTER. One sentence explaining why the rewrite is stronger.`);
+  }
+
+  // Task 3
+  parts.push(`\n\n═══ TASK 3 — ADD AUTHENTICITY SIGNALS ═══
+Strengthen high-level or generic bullets by adding: ${S.authSignals.length ? S.authSignals.join(', ') : 'named tools, architecture context, operational scale'}.
+Flag anywhere the experience feels too abstracted or "safe."
+Suggest improvements where context would make the work undeniably real.`);
+
+  if (keyWin)    parts.push(`Key win to highlight: ${keyWin}`);
+  if (archCtx)   parts.push(`Architecture/trade-off context: ${archCtx}`);
+  if (domainCtx) parts.push(`Domain-specific context: ${domainCtx}`);
+
+  // Task 4
+  parts.push(`\n\n═══ TASK 4 — POSITIONING ═══
+Primary lane: ${lane}
+
+Rewrite the professional summary to lock onto this lane — not a generic tech summary.
+The first two sentences must answer: what I do, what stack I'm strongest in, what differentiates me.
+Ensure consistency between summary and experience bullets.`);
+
+  // Task 5
+  parts.push(`\n\n═══ TASK 5 — SELECTED PROJECTS / KEY INITIATIVES ═══
+Create a Projects section with 3–5 entries. Each entry needs:
+• Project name (specific, not "Internal Tool")
+• Stack and tools used
+• What was built, migrated, or improved
+• Why it matters (business impact, technical significance, or scale)
+
+Make each feel like proof of hands-on work — not a generic deliverable description.`);
+
+  const projs = [proj1, proj2, proj3].filter(Boolean);
+  if (projs.length) {
+    parts.push(`Projects to build out:\n${projs.map((p,i)=>`${i+1}. ${p}`).join('\n')}`);
+  }
+
+  if (S.artifact !== 'none') {
+    parts.push(`Also recommend building ${artifactCopy[S.artifact]} and write the resume line for it.`);
+  }
+
+  // Task 6
+  parts.push(`\n\n═══ TASK 6 — 10-SECOND SCAN TEST ═══
+Review the top third of the resume. Does it immediately show:
+• What this person does (specific role, not vague title)
+• Their strongest technical area (tool or platform depth)
+• One signal that makes them different from the next candidate
+
+Suggest ordering, emphasis, or wording changes to pass the 10-second test.`);
+
+  if (S.avoids.length) {
+    parts.push(`\n── ANTI-PATTERNS TO FIND AND FIX ──`);
+    S.avoids.forEach(k => { if (avoidCopy[k]) parts.push(`• ${avoidCopy[k]}`); });
+    parts.push(`For each issue found: show the original, explain the problem, provide a corrected version.`);
+  }
+
+  // Quick wins
+  const wins = [];
+  if (S.quickWins.voice)    wins.push('Voice consistency check: flag any tone drift — where the resume shifts from technical/domain-specific language to generic corporate language. Suggest specific word swaps.');
+  if (S.quickWins.variants) wins.push('Role variants: how to fork this resume into 3 targeted versions for different JD types. What changes in summary, skills ordering, and which bullets get front-loaded for each variant.');
+  if (S.quickWins.skills)   wins.push('Skills section restructure: organize by domain — Languages & Frameworks | Cloud & Infra | Security & Compliance | Observability & Tooling | Methodologies. Use the candidate\'s actual stack.');
+  if (wins.length) {
+    parts.push(`\n── QUICK WINS ──\n${wins.map((w,i)=>`${i+1}. ${w}`).join('\n')}`);
+  }
+
+  // Verification append
+  if (S.verify === 'yes') {
+    parts.push(`\n\n═══ FOLLOW-UP: INTERVIEW VERIFICATION TEST ═══
+After rewriting the experience section, run this test on the new version:
+
+For each rewritten bullet, give 2 follow-up questions a hiring manager would ask to verify this is real work — the kind that reveal whether the candidate actually did it.
+
+Format:
+• [Bullet — shortened]
+  → Q1: [verification question]
+  → Q2: [harder follow-up testing depth]
+
+Flag any bullet where the follow-up questions would be difficult to answer from genuine experience — those bullets still need more real context from the candidate.
+
+Rule: if they can't answer confidently from memory → that bullet is still weak.`);
+  }
+
+  // Output format
+  parts.push(`\n\n═══ OUTPUT FORMAT ═══
+Return in this exact order:
+1. 🔍 Key Weaknesses (direct bullet list — no softening)
+2. ✍️ Rewritten Experience Section (BEFORE/AFTER for each bullet)
+3. 🚀 New Professional Summary (lane-specific, tool-forward)
+4. 🧠 Positioning Notes
+5. 🛠️ Selected Projects Section (new)
+6. ⚡ Quick Wins (small changes, big signal impact)
+
+Important:
+• Do NOT invent metrics or fabricate experience
+• Do NOT use generic corporate buzzwords
+• Prioritize technical credibility over sounding impressive
+• If information is missing, ask a targeted clarifying question rather than guessing`);
+
+  if (resume) {
+    parts.push(`\n\n═══ CANDIDATE'S CURRENT RESUME ═══\n${resume}`);
+  } else {
+    parts.push(`\n\n[PASTE RESUME BELOW THIS LINE]\n`);
+  }
+
+  return parts.join('\n');
+}
+
+// ─── Follow-up prompt ─────────────────────────────────────────────
+function buildFollowUpPrompt() {
+  return `─── FOLLOW-UP: INTERVIEW VERIFICATION TEST ───
+
+Now that you've rewritten the resume bullets, run a verification pass:
+
+For each bullet in the rewritten experience section, generate 2 questions a hiring manager would ask to confirm this is real work — the kind that differentiate candidates who lived it from candidates who wrote it.
+
+Format:
+• [Bullet text — abbreviated]
+  → Q1: [verification question]
+  → Q2: [harder follow-up probing depth or edge cases]
+
+After listing all questions, flag any bullet where realistic answers would require knowledge that couldn't come from simply doing the job — those bullets likely still lack enough specific personal context.
+
+The test: if the candidate can't answer these from memory in 30 seconds → that bullet still needs more of their real experience embedded in it.`;
+}
+
+// ─── Render ───────────────────────────────────────────────────────
+let mainCache = '', followCache = '';
+
+function buildAll() {
+  mainCache   = buildMainPrompt();
+  followCache = buildFollowUpPrompt();
+  renderOutput();
+}
+
+function renderOutput() {
+  const el    = document.getElementById('output');
+  const label = document.getElementById('output-label');
+  const cc    = document.getElementById('char-count');
+  const text  = S.activeTab === 'main' ? mainCache : followCache;
+
+  label.textContent = S.activeTab === 'main' ? 'MAIN PROMPT' : 'FOLLOW-UP PROMPT';
+
+  const hasContent = !!text;
+  el.textContent = hasContent ? text : 'Fill in your profile above — your prompt builds here in real time.';
+  el.classList.toggle('has-content', hasContent);
+  cc.textContent = hasContent ? text.length.toLocaleString() + ' chars' : '0 chars';
+}
+
+// ─── Copy ─────────────────────────────────────────────────────────
+function copyPrompt() {
+  const el = document.getElementById('output');
+  if (!el.classList.contains('has-content')) { showToast('Fill in some fields first.'); return; }
+  navigator.clipboard.writeText(el.textContent).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.classList.add('success');
+    btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Copied!`;
+    setTimeout(() => {
+      btn.classList.remove('success');
+      btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy Prompt`;
+    }, 2000);
+  });
+}
+
+function openAI(url) {
+  const el = document.getElementById('output');
+  if (!el.classList.contains('has-content')) { showToast('Fill in some fields first.'); return; }
+  navigator.clipboard.writeText(el.textContent).then(() => {
+    showToast('Copied — paste when you arrive!');
+    setTimeout(() => window.open(url, '_blank'), 600);
+  }).catch(() => window.open(url, '_blank'));
+}
+
+// ─── Save / Load / Export ─────────────────────────────────────────
+const FIELDS = ['title','industry','tools','frameworks','yoe','resume-paste',
+                'weak-bullet','bullet-tool','bullet-scope','bullet-result','bullet-context',
+                'key-win','arch-ctx','domain-ctx','custom-lane','proj1','proj2','proj3'];
+
+function collectProfile() {
+  const data = { fields:{}, state:{...S} };
+  FIELDS.forEach(id => { data.fields[id] = document.getElementById(id).value; });
+  return data;
+}
+
+function applyProfile(data) {
+  if (data.fields) {
+    FIELDS.forEach(id => {
+      const el = document.getElementById(id);
+      if (el && data.fields[id] !== undefined) el.value = data.fields[id];
+    });
+  }
+  if (data.state) {
+    Object.assign(S, data.state);
+    syncUI();
+  }
+  buildAll();
+}
+
+function syncUI() {
+  // Level pills
+  document.querySelectorAll('#level-pills .pill').forEach(p => {
+    p.className = p.dataset.val === S.level ? 'pill a-orange' : 'pill';
+  });
+  // Diagnose pills
+  document.querySelectorAll('#diagnose-pills .pill').forEach(p => {
+    p.className = p.dataset.val === S.diagnoseArea ? 'pill a-orange' : 'pill';
+  });
+  // Funnel pills
+  document.querySelectorAll('#funnel-pills .pill').forEach(p => {
+    p.className = p.dataset.val === S.funnelStage ? 'pill a-cyan' : 'pill';
+  });
+  // Auth pills
+  document.querySelectorAll('#auth-pills .pill').forEach(p => {
+    p.className = S.authSignals.includes(p.dataset.val) ? 'pill a-lime' : 'pill';
+  });
+  // Lane cards
+  document.querySelectorAll('#lane-cards .lane-card').forEach(c => {
+    c.classList.toggle('active', c.dataset.lane === S.lane);
+  });
+  // Artifact cards
+  document.querySelectorAll('#artifact-modes .mode-card').forEach(c => {
+    c.classList.toggle('active', c.dataset.artifact === S.artifact);
+  });
+  // Avoid cards
+  document.querySelectorAll('#avoid-cards .avoid-card').forEach(c => {
+    c.classList.toggle('active', S.avoids.includes(c.dataset.avoid));
+  });
+  // Toggles
+  ['voice','variants','skills'].forEach(k => {
+    document.getElementById('tog-'+k).classList.toggle('on', S.quickWins[k]);
+  });
+  // Verify pills
+  document.querySelectorAll('#verify-pills .pill').forEach(p => {
+    p.className = p.dataset.val === S.verify ? 'pill a-orange' : 'pill';
+  });
+}
+
+function saveProfile() {
+  try {
+    localStorage.setItem('ats-job-hack-profile', JSON.stringify(collectProfile()));
+    showToast('Profile saved to browser ✓');
+  } catch(e) { showToast('Save failed — try Export instead'); }
+}
+
+function loadProfile() {
+  try {
+    const raw = localStorage.getItem('ats-job-hack-profile');
+    if (!raw) { showToast('No saved profile found.'); return; }
+    applyProfile(JSON.parse(raw));
+    showToast('Profile loaded ✓');
+  } catch(e) { showToast('Load failed — profile may be corrupted'); }
+}
+
+function exportProfile() {
+  const data = JSON.stringify(collectProfile(), null, 2);
+  const blob = new Blob([data], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = 'ats-job-hack-profile.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Profile exported as .json ✓');
+}
+
+function importProfile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      applyProfile(JSON.parse(ev.target.result));
+      showToast('Profile imported ✓');
+    } catch(err) { showToast('Import failed — invalid file'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+// Wire the load button to also trigger file import if no localStorage
+const origLoad = window.loadProfile;
+document.querySelector('.btn-load').addEventListener('click', () => {
+  const raw = localStorage.getItem('ats-job-hack-profile');
+  if (!raw) {
+    document.getElementById('file-import').click();
+  }
+});
+
+// ─── Reset ────────────────────────────────────────────────────────
+function clearFields() {
+  FIELDS.forEach(id => { document.getElementById(id).value = ''; });
+  buildAll();
+  showToast('All fields cleared.');
+}
+
+// ─── Toast ────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+// ─── Init ─────────────────────────────────────────────────────────
+buildAll();
+</script>
+</body>
+</html>
