@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>Turo Investment Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: #f2f2f7;
+  color: #1c1c1e;
+  font-size: 15px;
+  padding-bottom: 40px;
+}
+
+header {
+  background: #7b1a4b;
+  color: white;
+  padding: 54px 16px 14px;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.2);
+}
+
+.container { padding: 16px 12px; display: flex; flex-direction: column; gap: 16px; }
+
+.card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.card-header {
+  padding: 10px 14px;
+  font-weight: 700;
+  font-size: 14px;
+  text-align: center;
+  letter-spacing: 0.2px;
+}
+
+.card-header.blue   { background: #cdd8f6; color: #1c1c1e; }
+.card-header.peach  { background: #fde8d0; color: #1c1c1e; }
+.card-header.green  { background: #d4edda; color: #1c1c1e; }
+.card-header.purple { background: #e0d5f5; color: #1c1c1e; }
+
+.row {
+  display: flex;
+  align-items: center;
+  border-top: 1px solid #f0f0f0;
+  min-height: 44px;
+}
+
+.row.divider { background: #9e9e9e; height: 8px; border: none; min-height: 8px; }
+
+.row label {
+  flex: 1;
+  padding: 8px 14px;
+  font-size: 14px;
+  color: #3a3a3c;
+}
+
+.row .val {
+  padding: 8px 14px;
+  font-size: 14px;
+  text-align: right;
+  min-width: 110px;
+  font-style: italic;
+  color: #3a3a3c;
+}
+
+.row .val.bold { font-weight: 700; font-style: normal; color: #1c1c1e; }
+
+.row .val.highlight {
+  background: #ffff00;
+  font-weight: 700;
+  color: #1c1c1e;
+  margin: 4px 10px;
+  border-radius: 4px;
+  padding: 4px 10px;
+}
+
+input[type="text"],
+input[type="number"] {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14px;
+  color: #1a56db;
+  text-align: right;
+  width: 120px;
+  padding: 8px 14px;
+}
+
+select {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14px;
+  color: #1a56db;
+  font-weight: 500;
+  text-align: right;
+  padding: 8px 14px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  width: 120px;
+}
+
+.ins-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.ins-table th {
+  background: #e8e8f0;
+  padding: 8px 4px;
+  text-align: center;
+  font-weight: 600;
+  border: 1px solid #ddd;
+}
+.ins-table th:first-child { text-align: left; padding-left: 8px; }
+.ins-table td {
+  padding: 7px 4px;
+  text-align: center;
+  border: 1px solid #eee;
+  color: #3a3a3c;
+}
+.ins-table td:first-child { text-align: left; padding-left: 8px; font-weight: 500; }
+.ins-table tr:nth-child(even) td { background: #fafafa; }
+
+.section-note {
+  background: white;
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 13px;
+  color: #3a3a3c;
+  line-height: 1.7;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.section-note strong { color: #1c1c1e; }
+.blue-note { color: #1a56db; font-weight: 600; }
+
+.negative { color: #d9534f !important; font-style: normal; }
+.positive { color: #28a745 !important; font-style: normal; }
+</style>
+</head>
+<body>
+
+<header>🚗 Turo Investment Calculator</header>
+
+<div class="container">
+
+  <!-- SECTION 1: Vehicle Costs -->
+  <div class="card">
+    <div class="card-header blue">1. Vehicle Costs</div>
+    <div class="row">
+      <label>Vehicle</label>
+      <input type="text" id="vehicle" value="Toyota Camry" oninput="calc()">
+    </div>
+    <div class="row">
+      <label>Purchase Price</label>
+      <input type="number" id="purchasePrice" value="14000" oninput="calc()">
+    </div>
+    <div class="row">
+      <label>Down Payment</label>
+      <input type="number" id="downPayment" value="2000" oninput="calc()">
+    </div>
+    <div class="row">
+      <label>Interest Rate (%)</label>
+      <input type="number" id="interestRate" value="6" step="0.1" oninput="calc()">
+    </div>
+    <div class="row">
+      <label>Loan Term (Months)</label>
+      <input type="number" id="loanTerm" value="72" oninput="calc()">
+    </div>
+    <div class="row">
+      <label>Monthly Std. Insurance</label>
+      <input type="number" id="monthlyInsurance" value="100" oninput="calc()">
+    </div>
+    <div class="row">
+      <label>Monthly Maintenance</label>
+      <input type="number" id="monthlyMaintenance" value="30" oninput="calc()">
+    </div>
+    <div class="row divider"></div>
+    <div class="row">
+      <label>Monthly Interest</label>
+      <div class="val" id="monthlyInterest">$60</div>
+    </div>
+    <div class="row">
+      <label>Monthly Principal</label>
+      <div class="val" id="monthlyPrincipal">$167</div>
+    </div>
+    <div class="row">
+      <label><em>Total Monthly Payment</em></label>
+      <div class="val bold" id="totalMonthlyPayment">$227</div>
+    </div>
+    <div class="row">
+      <label><em>Total Yearly Payment</em></label>
+      <div class="val bold" id="totalYearlyPayment">$2,720</div>
+    </div>
+    <div class="row divider"></div>
+    <div class="row">
+      <label><strong>Total Monthly Vehicle Cost</strong></label>
+      <div class="val bold" id="totalMonthlyVehicleCost">$357</div>
+    </div>
+    <div class="row">
+      <label><strong>Total Yearly Vehicle Cost</strong></label>
+      <div class="val bold" id="totalYearlyVehicleCost">$4,280</div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: Depreciation -->
+  <div class="card">
+    <div class="card-header blue">2. Vehicle Depreciation</div>
+    <div class="row">
+      <label>Yearly Depreciation ($)</label>
+      <input type="number" id="yearlyDepreciation" value="0" oninput="calc()">
+    </div>
+    <div class="row">
+      <label><strong>Total Depreciation</strong></label>
+      <div class="val bold" id="totalDepreciation">$0</div>
+    </div>
+  </div>
+
+  <!-- SECTION 3: Turo Revenue -->
+  <div class="card">
+    <div class="card-header peach">3. Turo Revenue</div>
+    <div class="row">
+      <label>Daily Rate</label>
+      <input type="number" id="dailyRate" value="45" oninput="calc()">
+    </div>
+    <div class="row">
+      <label>Avg. Days Per Trip</label>
+      <input type="number" id="avgDaysPerTrip" value="3" oninput="calc()">
+    </div>
+    <div class="row">
+      <label>Lifetime Trips</label>
+      <input type="number" id="lifetimeTrips" value="70" oninput="calc()">
+    </div>
+    <div class="row">
+      <label>Years In Service</label>
+      <input type="number" id="yearsInService" value="2" oninput="calc()">
+    </div>
+    <div class="row divider"></div>
+    <div class="row">
+      <label>Est. Days Rented (Lifetime)</label>
+      <div class="val" id="estDaysRented">210</div>
+    </div>
+    <div class="row">
+      <label>Avg. Days Rented Per Year</label>
+      <div class="val" id="avgDaysPerYear">105</div>
+    </div>
+    <div class="row">
+      <label>Utilization Rate (Year)</label>
+      <div class="val" id="utilizationRate">29%</div>
+    </div>
+    <div class="row">
+      <label>Revenue Per Trip</label>
+      <div class="val" id="revenuePerTrip">$135</div>
+    </div>
+    <div class="row">
+      <label><strong>Est. Lifetime Revenue</strong></label>
+      <div class="val bold" id="estLifetimeRevenue">$9,450</div>
+    </div>
+    <div class="row">
+      <label><strong>Est. Revenue Per Year</strong></label>
+      <div class="val bold" id="estRevenuePerYear">$4,725</div>
+    </div>
+  </div>
+
+  <!-- SECTION 4: Turo Costs -->
+  <div class="card">
+    <div class="card-header peach">4. Turo Costs</div>
+    <div class="row">
+      <label>Turo Insurance Plan</label>
+      <select id="insurancePlan" onchange="calc()">
+        <option value="60">60 Plan</option>
+        <option value="75">75 Plan</option>
+        <option value="80">80 Plan</option>
+        <option value="85">85 Plan</option>
+        <option value="90" selected>90 Plan</option>
+      </select>
+    </div>
+    <div class="row">
+      <label>Insurance Fees</label>
+      <div class="val" id="insuranceFeesPct">10%</div>
+    </div>
+    <div class="row">
+      <label>Additional Turo Fees (%)</label>
+      <input type="number" id="additionalFeesPct" value="15" oninput="calc()">
+    </div>
+    <div class="row divider"></div>
+    <div class="row">
+      <label>Lifetime Insurance Fees</label>
+      <div class="val" id="lifetimeInsuranceFees">$945</div>
+    </div>
+    <div class="row">
+      <label>Lifetime Additional Fees</label>
+      <div class="val" id="lifetimeAdditionalFees">$1,418</div>
+    </div>
+    <div class="row">
+      <label><strong>Est. Lifetime Fees</strong></label>
+      <div class="val bold" id="estLifetimeFees">$2,363</div>
+    </div>
+    <div class="row">
+      <label><strong>Est. Yearly Fees</strong></label>
+      <div class="val bold" id="estYearlyFees">$1,181</div>
+    </div>
+    <div class="row divider"></div>
+    <div class="row">
+      <label><strong>Lifetime Revenue - Fees</strong></label>
+      <div class="val bold" id="lifetimeRevMinusFees">$7,088</div>
+    </div>
+    <div class="row">
+      <label><strong>Yearly Revenue - Fees</strong></label>
+      <div class="val bold" id="yearlyRevMinusFees">$3,544</div>
+    </div>
+  </div>
+
+  <!-- SECTION 5: ROI -->
+  <div class="card">
+    <div class="card-header green">5. Return On Investment</div>
+    <div class="row">
+      <label>Yearly Turo Profit</label>
+      <div class="val bold" id="yearlyTuroProfit">-$736</div>
+    </div>
+    <div class="row">
+      <label>Lifetime Turo Profit</label>
+      <div class="val bold" id="lifetimeTuroProfit">-$1,473</div>
+    </div>
+    <div class="row divider"></div>
+    <div class="row">
+      <label>Car Resale Value</label>
+      <input type="number" id="carResaleValue" value="14000" oninput="calc()">
+    </div>
+    <div class="row">
+      <label>Loan Remaining</label>
+      <div class="val" id="loanRemaining">$8,000</div>
+    </div>
+    <div class="row">
+      <label>Resale Profit</label>
+      <div class="val" id="resaleProfit">$6,000</div>
+    </div>
+    <div class="row divider"></div>
+    <div class="row">
+      <label><strong>Total Profit</strong></label>
+      <div class="val bold" id="totalProfit">$2,528</div>
+    </div>
+    <div class="row">
+      <label><strong>Return on Down Payment</strong></label>
+      <div class="val bold highlight" id="returnOnDownPayment">126.38%</div>
+    </div>
+  </div>
+
+  <!-- Insurance Plan Comparison -->
+  <div class="card">
+    <div class="card-header purple">Insurance Plan Comparison</div>
+    <div style="overflow-x:auto; padding: 12px 10px;">
+      <table class="ins-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>60</th>
+            <th>75</th>
+            <th>80</th>
+            <th>85</th>
+            <th>90</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Deductible</td>
+            <td>$0</td><td>$250</td><td>$750</td><td>$1,625</td><td>$2,500</td>
+          </tr>
+          <tr>
+            <td>% Rev Lost</td>
+            <td>40%</td><td>25%</td><td>20%</td><td>15%</td><td>10%</td>
+          </tr>
+          <tr>
+            <td>Lifetime Rev Lost</td>
+            <td id="ins60_rev">-</td>
+            <td id="ins75_rev">-</td>
+            <td id="ins80_rev">-</td>
+            <td id="ins85_rev">-</td>
+            <td id="ins90_rev">-</td>
+          </tr>
+          <tr>
+            <td>Rev Lost + Ded.</td>
+            <td id="ins60_total">-</td>
+            <td id="ins75_total">-</td>
+            <td id="ins80_total">-</td>
+            <td id="ins85_total">-</td>
+            <td id="ins90_total">-</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Directions -->
+  <div class="section-note">
+    <strong>Directions:</strong><br><br>
+    <span class="blue-note">Blue fields are inputs.</span> All other values calculate automatically.<br><br>
+    <strong>Step 1:</strong> Build out all expected vehicle costs.<br>
+    <strong>Step 2:</strong> Estimate yearly depreciation by looking up current vehicle costs for same make/model from previous year.<br>
+    <strong>Step 3:</strong> Input anticipated daily rate and lifetime trip stats based on local estimations.<br>
+    <strong>Step 4:</strong> Pick from the standard Turo insurance plan options. Estimate additional fees based on local estimations.<br>
+    <strong>Step 5:</strong> ROI calculations based on assumption that car will be sold at the end of the service period.
+  </div>
+
+</div>
+
+<script>
+const insurancePlans = {
+  60: { deductible: 0,    pct: 0.40 },
+  75: { deductible: 250,  pct: 0.25 },
+  80: { deductible: 750,  pct: 0.20 },
+  85: { deductible: 1625, pct: 0.15 },
+  90: { deductible: 2500, pct: 0.10 },
+};
+
+function fmt(n) {
+  const abs = Math.round(Math.abs(n));
+  const s = '$' + abs.toLocaleString('en-US');
+  return n < 0 ? '-' + s : s;
+}
+
+function fmtPct(n) {
+  return (n * 100).toFixed(2) + '%';
+}
+
+function val(id) { return parseFloat(document.getElementById(id).value) || 0; }
+
+function set(id, text, extraClass) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  el.classList.remove('negative', 'positive');
+  if (extraClass) el.classList.add(extraClass);
+}
+
+function calc() {
+  // Section 1
+  const purchasePrice  = val('purchasePrice');
+  const downPayment    = val('downPayment');
+  const annualRate     = val('interestRate') / 100;
+  const monthlyRate    = annualRate / 12;
+  const loanTerm       = val('loanTerm');
+  const monthlyIns     = val('monthlyInsurance');
+  const monthlyMaint   = val('monthlyMaintenance');
+
+  const loanAmount = purchasePrice - downPayment;
+
+  let totalMonthlyPayment, monthlyInterestAmt, monthlyPrincipalAmt;
+  if (monthlyRate === 0 || loanTerm === 0) {
+    monthlyPrincipalAmt  = loanTerm > 0 ? loanAmount / loanTerm : 0;
+    monthlyInterestAmt   = 0;
+    totalMonthlyPayment  = monthlyPrincipalAmt;
+  } else {
+    totalMonthlyPayment  = loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, loanTerm)) / (Math.pow(1 + monthlyRate, loanTerm) - 1);
+    monthlyInterestAmt   = loanAmount * monthlyRate;
+    monthlyPrincipalAmt  = totalMonthlyPayment - monthlyInterestAmt;
+  }
+
+  const totalYearlyPayment      = totalMonthlyPayment * 12;
+  const totalMonthlyVehicleCost = totalMonthlyPayment + monthlyIns + monthlyMaint;
+  const totalYearlyVehicleCost  = totalMonthlyVehicleCost * 12;
+
+  set('monthlyInterest',          fmt(monthlyInterestAmt));
+  set('monthlyPrincipal',         fmt(monthlyPrincipalAmt));
+  set('totalMonthlyPayment',      fmt(totalMonthlyPayment));
+  set('totalYearlyPayment',       fmt(totalYearlyPayment));
+  set('totalMonthlyVehicleCost',  fmt(totalMonthlyVehicleCost));
+  set('totalYearlyVehicleCost',   fmt(totalYearlyVehicleCost));
+
+  // Section 2
+  const yearsInService     = val('yearsInService');   // allow 0 — don't clamp
+  const safeYears          = yearsInService > 0 ? yearsInService : 1; // only used for division
+  const yearlyDepreciation = val('yearlyDepreciation');
+  const totalDepreciation  = yearlyDepreciation * yearsInService;
+  set('totalDepreciation', fmt(totalDepreciation));
+
+  // Section 3
+  const dailyRate      = val('dailyRate');
+  const avgDaysPerTrip = val('avgDaysPerTrip');
+  const lifetimeTrips  = val('lifetimeTrips');
+
+  const estDaysRented      = lifetimeTrips * avgDaysPerTrip;
+  const avgDaysPerYear     = yearsInService > 0 ? estDaysRented / yearsInService : 0;
+  const utilizationRate    = avgDaysPerYear / 365;
+  const revenuePerTrip     = dailyRate * avgDaysPerTrip;
+  const estLifetimeRevenue = revenuePerTrip * lifetimeTrips;
+  const estRevenuePerYear  = yearsInService > 0 ? estLifetimeRevenue / yearsInService : 0;
+
+  set('estDaysRented',      Math.round(estDaysRented).toString());
+  set('avgDaysPerYear',     Math.round(avgDaysPerYear).toString());
+  set('utilizationRate',    Math.round(utilizationRate * 100) + '%');
+  set('revenuePerTrip',     fmt(revenuePerTrip));
+  set('estLifetimeRevenue', fmt(estLifetimeRevenue));
+  set('estRevenuePerYear',  fmt(estRevenuePerYear));
+
+  // Section 4
+  const planKey           = parseInt(document.getElementById('insurancePlan').value);
+  const plan              = insurancePlans[planKey];
+  const insurancePct      = plan.pct;
+  const additionalFeesPct = val('additionalFeesPct') / 100;
+
+  const lifetimeInsuranceFees  = estLifetimeRevenue * insurancePct;
+  const lifetimeAdditionalFees = estLifetimeRevenue * additionalFeesPct;
+  const estLifetimeFees        = lifetimeInsuranceFees + lifetimeAdditionalFees;
+  const estYearlyFees          = yearsInService > 0 ? estLifetimeFees / yearsInService : 0;
+  const lifetimeRevMinusFees   = estLifetimeRevenue - estLifetimeFees;
+  const yearlyRevMinusFees     = estRevenuePerYear - estYearlyFees;
+
+  set('insuranceFeesPct',       Math.round(insurancePct * 100) + '%');
+  set('lifetimeInsuranceFees',  fmt(lifetimeInsuranceFees));
+  set('lifetimeAdditionalFees', fmt(lifetimeAdditionalFees));
+  set('estLifetimeFees',        fmt(estLifetimeFees));
+  set('estYearlyFees',          fmt(estYearlyFees));
+  set('lifetimeRevMinusFees',   fmt(lifetimeRevMinusFees));
+  set('yearlyRevMinusFees',     fmt(yearlyRevMinusFees));
+
+  // Section 5
+  const yearlyVehicleTotal = totalYearlyVehicleCost + yearlyDepreciation;
+  const yearlyTuroProfit   = yearlyRevMinusFees - yearlyVehicleTotal;
+  const lifetimeTuroProfit = yearlyTuroProfit * (yearsInService > 0 ? yearsInService : 1);
+
+  set('yearlyTuroProfit',   fmt(yearlyTuroProfit),   yearlyTuroProfit < 0 ? 'negative' : 'positive');
+  set('lifetimeTuroProfit', fmt(lifetimeTuroProfit), lifetimeTuroProfit < 0 ? 'negative' : 'positive');
+
+  // Loan remaining after yearsInService — uses actual amortization schedule
+  const monthsPaid = Math.round((yearsInService > 0 ? yearsInService : 0) * 12);
+  let loanRemainingAmt = loanAmount; // default: nothing paid yet
+  if (loanTerm > 0) {
+    if (monthsPaid >= loanTerm) {
+      loanRemainingAmt = 0; // loan fully paid off
+    } else if (monthlyRate === 0) {
+      loanRemainingAmt = Math.max(0, loanAmount - monthlyPrincipalAmt * monthsPaid);
+    } else {
+      // Standard amortization remaining balance formula
+      loanRemainingAmt = loanAmount * Math.pow(1 + monthlyRate, monthsPaid)
+        - totalMonthlyPayment * (Math.pow(1 + monthlyRate, monthsPaid) - 1) / monthlyRate;
+      loanRemainingAmt = Math.max(0, loanRemainingAmt);
+    }
+  }
+
+  const carResaleValue = val('carResaleValue');
+  const resaleProfit   = carResaleValue - loanRemainingAmt;
+  const totalProfit    = lifetimeTuroProfit + resaleProfit;
+  const returnOnDP     = downPayment > 0 ? totalProfit / downPayment : 0;
+
+  set('loanRemaining',        fmt(loanRemainingAmt));
+  set('resaleProfit',         fmt(resaleProfit));
+  set('totalProfit',          fmt(totalProfit), totalProfit < 0 ? 'negative' : 'positive');
+  set('returnOnDownPayment',  fmtPct(returnOnDP));
+
+  // Insurance comparison table
+  [60, 75, 80, 85, 90].forEach(p => {
+    const pl      = insurancePlans[p];
+    const revLost = estLifetimeRevenue * pl.pct;
+    const total   = revLost + pl.deductible;
+    set('ins' + p + '_rev',   fmt(revLost));
+    set('ins' + p + '_total', fmt(total));
+  });
+}
+
+calc();
+</script>
+</body>
+</html>
