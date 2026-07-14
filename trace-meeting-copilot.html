@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TRACE Meeting Copilot — Universal Edition</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:      #f5f2eb;
+  --surface: #ffffff;
+  --s2:      #edeae0;
+  --s3:      #e4e0d4;
+  --border:  rgba(26,24,20,0.09);
+  --border2: rgba(26,24,20,0.17);
+  --border3: rgba(26,24,20,0.26);
+  --text:    #1a1814;
+  --text2:   #4a4640;
+  --text3:   #8a847a;
+
+  --ink:     #1a1814;
+  --ink-bg:  rgba(26,24,20,0.05);
+  --ink-bdr: rgba(26,24,20,0.18);
+
+  /* Lens colors: T=teal R=rust A=plum C=gold E=sage */
+  --teal:    #0e6e7e;
+  --teal-bg: rgba(14,110,126,0.07);
+  --teal-bdr:rgba(14,110,126,0.22);
+
+  --rust:    #a0442a;
+  --rust-bg: rgba(160,68,42,0.07);
+  --rust-bdr:rgba(160,68,42,0.22);
+
+  --plum:    #6b3fa0;
+  --plum-bg: rgba(107,63,160,0.07);
+  --plum-bdr:rgba(107,63,160,0.22);
+
+  --gold:    #8a6200;
+  --gold-bg: rgba(138,98,0,0.07);
+  --gold-bdr:rgba(138,98,0,0.22);
+
+  --sage:    #3a6b4a;
+  --sage-bg: rgba(58,107,74,0.07);
+  --sage-bdr:rgba(58,107,74,0.22);
+
+  --r:  10px;
+  --rl: 16px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  line-height:1.6;
+}
+
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  opacity:0.4;
+}
+
+.app{
+  position:relative;z-index:1;
+  max-width:1140px;margin:0 auto;
+  padding:2rem 1.5rem 5rem;
+  display:grid;
+  grid-template-columns:1fr 430px;
+  gap:2rem;
+  align-items:start;
+}
+@media (max-width:900px){
+  .app{grid-template-columns:1fr;}
+  .output-col{position:static !important;}
+}
+
+/* ── Header ── */
+header{
+  grid-column:1/-1;
+  display:flex;align-items:center;justify-content:space-between;
+  padding-bottom:1.5rem;
+  border-bottom:1px solid var(--border2);
+  margin-bottom:0.25rem;
+  gap:1rem;flex-wrap:wrap;
+}
+.logo{display:flex;align-items:center;gap:13px;}
+.logo-mark{
+  width:42px;height:42px;
+  background:var(--ink);
+  border-radius:12px;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;
+  font-weight:800;font-size:10px;
+  color:var(--bg);letter-spacing:0.04em;
+  line-height:1.3;text-align:center;
+}
+.logo-text h1{
+  font-family:'Syne',sans-serif;
+  font-size:20px;font-weight:800;
+  color:var(--text);letter-spacing:-0.03em;
+}
+.logo-text p{font-size:11.5px;color:var(--text3);font-weight:300;margin-top:2px;}
+.header-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.hbadge{
+  font-size:11px;font-weight:500;padding:5px 12px;
+  border-radius:20px;border:1px solid;
+}
+.hbadge-live{
+  color:var(--sage);border-color:var(--sage-bdr);background:var(--sage-bg);
+  display:flex;align-items:center;gap:6px;
+}
+.hbadge-live .dot{
+  width:5px;height:5px;border-radius:50%;
+  background:var(--sage);
+  animation:pulse 2s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.25}}
+@media (prefers-reduced-motion: reduce){
+  .hbadge-live .dot{animation:none;}
+}
+.hbadge-ed{color:var(--text3);border-color:var(--border2);background:var(--s2);}
+
+/* ── Columns ── */
+.form-col{display:flex;flex-direction:column;gap:1.25rem;}
+.output-col{position:sticky;top:1.5rem;display:flex;flex-direction:column;gap:1rem;}
+
+/* ── Cards ── */
+.card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--rl);padding:1.25rem;
+  transition:border-color 0.2s;
+}
+.card:focus-within{border-color:var(--border2);}
+.card.ct { border-top:2px solid var(--teal); }
+.card.cr { border-top:2px solid var(--rust); }
+.card.cp { border-top:2px solid var(--plum); }
+.card.cg { border-top:2px solid var(--gold); }
+.card.cs { border-top:2px solid var(--sage); }
+.card.ci { border-top:2px solid var(--ink);  }
+
+.card-header{display:flex;align-items:flex-start;gap:11px;margin-bottom:1rem;}
+.step-dot{
+  width:28px;height:28px;border-radius:8px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-size:12px;font-weight:700;
+}
+.dt{background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal-bdr);}
+.dr{background:var(--rust-bg);color:var(--rust);border:1px solid var(--rust-bdr);}
+.dp{background:var(--plum-bg);color:var(--plum);border:1px solid var(--plum-bdr);}
+.dg{background:var(--gold-bg);color:var(--gold);border:1px solid var(--gold-bdr);}
+.ds{background:var(--sage-bg);color:var(--sage);border:1px solid var(--sage-bdr);}
+.di{background:var(--ink-bg); color:var(--ink); border:1px solid var(--ink-bdr);}
+
+.card-title{font-family:'Syne',sans-serif;font-size:13.5px;font-weight:700;color:var(--text);letter-spacing:-0.01em;}
+.card-sub{font-size:11.5px;color:var(--text3);font-weight:300;margin-top:3px;line-height:1.45;}
+
+/* ── Fields ── */
+.field{margin-bottom:.875rem;}
+.field:last-child{margin-bottom:0;}
+.field-label{
+  font-size:11px;font-weight:500;color:var(--text3);
+  text-transform:uppercase;letter-spacing:.08em;
+  margin-bottom:6px;display:flex;align-items:center;gap:6px;
+}
+.field-label .hint{
+  font-size:10.5px;color:var(--text3);text-transform:none;
+  letter-spacing:0;font-weight:300;font-style:italic;
+}
+
+input[type=text],textarea{
+  width:100%;background:var(--s2);
+  border:1px solid var(--border);border-radius:var(--r);
+  color:var(--text);font-family:'DM Sans',sans-serif;
+  font-size:13.5px;font-weight:300;
+  padding:9px 12px;outline:none;
+  transition:border-color .2s,background .2s;
+  resize:vertical;
+}
+input[type=text]:focus,textarea:focus{
+  border-color:var(--teal-bdr);background:var(--s3);
+}
+input::placeholder,textarea::placeholder{color:var(--text3);}
+textarea{min-height:70px;line-height:1.55;}
+
+/* ── Meeting type grid ── */
+.lane-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:7px;
+}
+.lane-card{
+  background:var(--s2);border:1px solid var(--border);
+  border-radius:var(--r);padding:12px 8px;
+  cursor:pointer;transition:all .15s;user-select:none;text-align:center;
+}
+.lane-card:hover{border-color:var(--border2);}
+.lane-card:focus-visible{outline:2px solid var(--teal);outline-offset:2px;}
+.lane-card.active{background:var(--teal-bg);border-color:var(--teal-bdr);}
+.lane-card .lc-name{
+  font-family:'Syne',sans-serif;font-size:11.5px;font-weight:700;
+  color:var(--text);letter-spacing:-0.01em;
+}
+.lane-card .lc-desc{font-size:10px;color:var(--text3);font-weight:300;margin-top:3px;line-height:1.35;}
+.lane-card.active .lc-name{color:var(--teal);}
+
+/* ── Lens selector ── */
+.lens-grid{display:flex;flex-direction:column;gap:7px;}
+.lens-row{
+  display:flex;align-items:center;gap:10px;
+  background:var(--s2);border:1px solid var(--border);
+  border-radius:var(--r);padding:9px 12px;
+  cursor:pointer;transition:all .15s;user-select:none;
+}
+.lens-row:hover{border-color:var(--border2);}
+.lens-row:focus-visible{outline:2px solid var(--teal);outline-offset:2px;}
+.lens-letter{
+  width:26px;height:26px;border-radius:7px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-size:12px;font-weight:800;
+  border:1px solid;transition:all .15s;
+  background:var(--surface);color:var(--text3);border-color:var(--border2);
+}
+.lens-info{flex:1;min-width:0;}
+.lens-name{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--text2);}
+.lens-q{font-size:10.5px;color:var(--text3);font-weight:300;line-height:1.35;}
+.lens-check{
+  font-size:10px;font-weight:500;color:var(--text3);
+  border:1px solid var(--border2);border-radius:20px;padding:2px 9px;
+  transition:all .15s;white-space:nowrap;
+}
+.lens-row.on .lens-check{color:var(--surface);}
+.lens-row.lt.on{background:var(--teal-bg);border-color:var(--teal-bdr);}
+.lens-row.lt.on .lens-letter{background:var(--teal);color:#fff;border-color:var(--teal);}
+.lens-row.lt.on .lens-name{color:var(--teal);}
+.lens-row.lt.on .lens-check{background:var(--teal);border-color:var(--teal);}
+.lens-row.lr.on{background:var(--rust-bg);border-color:var(--rust-bdr);}
+.lens-row.lr.on .lens-letter{background:var(--rust);color:#fff;border-color:var(--rust);}
+.lens-row.lr.on .lens-name{color:var(--rust);}
+.lens-row.lr.on .lens-check{background:var(--rust);border-color:var(--rust);}
+.lens-row.lp.on{background:var(--plum-bg);border-color:var(--plum-bdr);}
+.lens-row.lp.on .lens-letter{background:var(--plum);color:#fff;border-color:var(--plum);}
+.lens-row.lp.on .lens-name{color:var(--plum);}
+.lens-row.lp.on .lens-check{background:var(--plum);border-color:var(--plum);}
+.lens-row.lg.on{background:var(--gold-bg);border-color:var(--gold-bdr);}
+.lens-row.lg.on .lens-letter{background:var(--gold);color:#fff;border-color:var(--gold);}
+.lens-row.lg.on .lens-name{color:var(--gold);}
+.lens-row.lg.on .lens-check{background:var(--gold);border-color:var(--gold);}
+.lens-row.ls.on{background:var(--sage-bg);border-color:var(--sage-bdr);}
+.lens-row.ls.on .lens-letter{background:var(--sage);color:#fff;border-color:var(--sage);}
+.lens-row.ls.on .lens-name{color:var(--sage);}
+.lens-row.ls.on .lens-check{background:var(--sage);border-color:var(--sage);}
+.reco-note{
+  font-size:10.5px;color:var(--text3);font-weight:300;font-style:italic;
+  margin-top:8px;display:flex;align-items:center;gap:6px;
+}
+.reco-btn{
+  font-size:10.5px;font-weight:500;font-style:normal;color:var(--teal);
+  background:var(--teal-bg);border:1px solid var(--teal-bdr);border-radius:20px;
+  padding:2px 10px;cursor:pointer;font-family:'DM Sans',sans-serif;
+  transition:all .15s;
+}
+.reco-btn:hover{background:rgba(14,110,126,0.13);}
+
+/* ── Mode cards ── */
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.mode-card{
+  background:var(--s2);border:1px solid var(--border);
+  border-radius:var(--r);padding:12px;
+  cursor:pointer;transition:all .15s;user-select:none;
+}
+.mode-card:hover{border-color:var(--border2);}
+.mode-card:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+.mode-card.active{background:var(--gold-bg);border-color:var(--gold-bdr);}
+.mode-card .mc-name{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--text);}
+.mode-card.active .mc-name{color:var(--gold);}
+.mode-card .mc-desc{font-size:10.5px;color:var(--text3);font-weight:300;margin-top:3px;line-height:1.4;}
+
+/* ── Toggles ── */
+.tog-row{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;padding:9px 0;border-bottom:1px solid var(--border);
+}
+.tog-row:last-child{border-bottom:none;padding-bottom:0;}
+.tog-row:first-child{padding-top:0;}
+.tog-text .tt{font-size:12.5px;font-weight:500;color:var(--text2);}
+.tog-text .td{font-size:10.5px;color:var(--text3);font-weight:300;line-height:1.4;}
+.toggle{
+  width:34px;height:19px;border-radius:20px;flex-shrink:0;
+  background:var(--s3);border:1px solid var(--border2);
+  position:relative;cursor:pointer;transition:all .2s;
+}
+.toggle:focus-visible{outline:2px solid var(--sage);outline-offset:2px;}
+.toggle::after{
+  content:'';position:absolute;top:2px;left:2px;
+  width:13px;height:13px;border-radius:50%;
+  background:var(--surface);border:1px solid var(--border2);
+  transition:transform .2s;
+}
+.toggle.on{background:var(--sage);border-color:var(--sage);}
+.toggle.on::after{transform:translateX(15px);border-color:var(--sage);}
+
+/* ── Output panel ── */
+.output-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--rl);padding:1.25rem;
+  display:flex;flex-direction:column;gap:.875rem;
+}
+.output-head{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.output-label{
+  font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text);
+}
+.char-count{font-size:10.5px;color:var(--text3);font-weight:300;}
+.output-box{
+  background:var(--s2);border:1px solid var(--border);
+  border-radius:var(--r);padding:14px;
+  font-size:12px;line-height:1.6;color:var(--text3);
+  white-space:pre-wrap;word-wrap:break-word;
+  min-height:220px;max-height:56vh;overflow-y:auto;
+  font-family:'DM Sans',sans-serif;font-weight:300;
+}
+.output-box.has-content{color:var(--text2);}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;}
+.btn{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:7px;
+  font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;
+  padding:10px 14px;border-radius:var(--r);cursor:pointer;
+  border:1px solid var(--border2);background:var(--s2);color:var(--text2);
+  transition:all .15s;white-space:nowrap;
+}
+.btn:hover{border-color:var(--border3);color:var(--text);}
+.btn:focus-visible{outline:2px solid var(--teal);outline-offset:2px;}
+.btn-primary{background:var(--ink);border-color:var(--ink);color:var(--bg);}
+.btn-primary:hover{opacity:.88;color:var(--bg);}
+.btn.success{background:var(--sage);border-color:var(--sage);color:#fff;}
+.util-row{display:flex;gap:6px;flex-wrap:wrap;}
+.util-btn{
+  font-size:11px;font-weight:400;padding:6px 12px;
+  border-radius:20px;cursor:pointer;
+  border:1px solid var(--border2);background:transparent;color:var(--text3);
+  font-family:'DM Sans',sans-serif;transition:all .15s;
+}
+.util-btn:hover{border-color:var(--border3);color:var(--text2);}
+
+/* ── Cheat card (mini reference) ── */
+.mini-ref{font-size:11px;color:var(--text3);font-weight:300;line-height:1.55;}
+.mini-ref b{font-family:'Syne',sans-serif;font-weight:700;font-size:10.5px;letter-spacing:.02em;}
+.mini-ref .mt{color:var(--teal);} .mini-ref .mr{color:var(--rust);}
+.mini-ref .mp{color:var(--plum);} .mini-ref .mg{color:var(--gold);}
+.mini-ref .ms{color:var(--sage);}
+
+/* ── Toast ── */
+#toast{
+  position:fixed;bottom:24px;left:50%;transform:translate(-50%,80px);
+  background:var(--ink);color:var(--bg);
+  font-size:12.5px;font-weight:400;padding:10px 20px;border-radius:24px;
+  transition:transform .3s;z-index:50;pointer-events:none;
+}
+#toast.show{transform:translate(-50%,0);}
+</style>
+</head>
+<body>
+<div class="app">
+
+<header>
+  <div class="logo">
+    <div class="logo-mark">TR<br/>ACE</div>
+    <div class="logo-text">
+      <h1>TRACE Meeting Copilot</h1>
+      <p>Walk into any technical meeting with sharp questions ready</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="hbadge hbadge-live"><span class="dot"></span>Builds live</span>
+    <span class="hbadge hbadge-ed">Universal Edition</span>
+  </div>
+</header>
+
+<!-- ═══════════ LEFT: FORM ═══════════ -->
+<div class="form-col">
+
+  <!-- 1. Meeting type -->
+  <div class="card ct">
+    <div class="card-header">
+      <div class="step-dot dt">1</div>
+      <div>
+        <div class="card-title">Meeting type</div>
+        <div class="card-sub">The format shapes which questions land. Pick the room you're walking into.</div>
+      </div>
+    </div>
+    <div class="lane-grid" id="lane-cards">
+      <div class="lane-card active" data-lane="arch" tabindex="0" role="button">
+        <span class="lc-name">Architecture review</span>
+        <span class="lc-desc">Designs, migrations, redesigns</span>
+      </div>
+      <div class="lane-card" data-lane="incident" tabindex="0" role="button">
+        <span class="lc-name">Incident call</span>
+        <span class="lc-desc">Active response or retro</span>
+      </div>
+      <div class="lane-card" data-lane="vendor" tabindex="0" role="button">
+        <span class="lc-name">Vendor pitch</span>
+        <span class="lc-desc">Demos, POCs, renewals</span>
+      </div>
+      <div class="lane-card" data-lane="change" tabindex="0" role="button">
+        <span class="lc-name">Change request</span>
+        <span class="lc-desc">CAB, patches, config changes</span>
+      </div>
+      <div class="lane-card" data-lane="standup" tabindex="0" role="button">
+        <span class="lc-name">Standup</span>
+        <span class="lc-desc">Quick sync, one-liners only</span>
+      </div>
+      <div class="lane-card" data-lane="general" tabindex="0" role="button">
+        <span class="lc-name">General / other</span>
+        <span class="lc-desc">Any technical discussion</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Context -->
+  <div class="card cp">
+    <div class="card-header">
+      <div class="step-dot dp">2</div>
+      <div>
+        <div class="card-title">Context</div>
+        <div class="card-sub">Even one field sharpens the output. Topic alone is enough to start.</div>
+      </div>
+    </div>
+    <div class="field">
+      <div class="field-label">Topic <span class="hint">what's on the table</span></div>
+      <input type="text" id="topic" placeholder="e.g. migrating auth to Okta, new EDR rollout, firewall rule change"/>
+    </div>
+    <div class="field">
+      <div class="field-label">What's being proposed or discussed <span class="hint">1–3 sentences</span></div>
+      <textarea id="proposal" placeholder="e.g. Vendor is pitching a cloud SIEM to replace our on-prem Splunk. Claims 40% cost savings and faster detection."></textarea>
+    </div>
+    <div class="field">
+      <div class="field-label">Your role in the room <span class="hint">optional</span></div>
+      <input type="text" id="role" placeholder="e.g. SOC analyst, security engineer, observer learning the domain"/>
+    </div>
+    <div class="field">
+      <div class="field-label">What feels off or glossed over <span class="hint">optional — gut feelings count</span></div>
+      <textarea id="gut" placeholder="e.g. Nobody has mentioned who maintains this after go-live. The timeline seems aggressive."></textarea>
+    </div>
+  </div>
+
+  <!-- 3. Lenses -->
+  <div class="card cr">
+    <div class="card-header">
+      <div class="step-dot dr">3</div>
+      <div>
+        <div class="card-title">Lens focus</div>
+        <div class="card-sub">Don't run all five at once — that's what causes the blank-out. Two lenses is the sweet spot.</div>
+      </div>
+    </div>
+    <div class="lens-grid" id="lens-rows">
+      <div class="lens-row lt" data-lens="T" tabindex="0" role="button">
+        <div class="lens-letter">T</div>
+        <div class="lens-info">
+          <div class="lens-name">Target</div>
+          <div class="lens-q">What problem does this actually solve, and for whom?</div>
+        </div>
+        <div class="lens-check">off</div>
+      </div>
+      <div class="lens-row lr" data-lens="R" tabindex="0" role="button">
+        <div class="lens-letter">R</div>
+        <div class="lens-info">
+          <div class="lens-name">Risks</div>
+          <div class="lens-q">What breaks, how badly, and what's the blast radius?</div>
+        </div>
+        <div class="lens-check">off</div>
+      </div>
+      <div class="lens-row lp" data-lens="A" tabindex="0" role="button">
+        <div class="lens-letter">A</div>
+        <div class="lens-info">
+          <div class="lens-name">Assumptions</div>
+          <div class="lens-q">What are we taking for granted that nobody verified?</div>
+        </div>
+        <div class="lens-check">off</div>
+      </div>
+      <div class="lens-row lg" data-lens="C" tabindex="0" role="button">
+        <div class="lens-letter">C</div>
+        <div class="lens-info">
+          <div class="lens-name">Constraints</div>
+          <div class="lens-q">Cost, time, people, tradeoffs — who owns this after go-live?</div>
+        </div>
+        <div class="lens-check">off</div>
+      </div>
+      <div class="lens-row ls" data-lens="E" tabindex="0" role="button">
+        <div class="lens-letter">E</div>
+        <div class="lens-info">
+          <div class="lens-name">Evidence</div>
+          <div class="lens-q">How do we know it works — and how would we detect if it didn't?</div>
+        </div>
+        <div class="lens-check">off</div>
+      </div>
+    </div>
+    <div class="reco-note">
+      <span id="reco-text">Recommended for architecture reviews: A + E — presenters rarely prepare for those.</span>
+      <button class="reco-btn" onclick="applyReco()">Use recommended</button>
+    </div>
+  </div>
+
+  <!-- 4. Output mode -->
+  <div class="card cg">
+    <div class="card-header">
+      <div class="step-dot dg">4</div>
+      <div>
+        <div class="card-title">Output mode</div>
+        <div class="card-sub">Instant cheat sheet from the built-in question bank, or a prompt for your AI to generate tailored questions.</div>
+      </div>
+    </div>
+    <div class="mode-grid" id="mode-cards">
+      <div class="mode-card active" data-mode="cheat" tabindex="0" role="button">
+        <div class="mc-name">Cheat sheet</div>
+        <div class="mc-desc">Ready-to-ask questions, instantly. Keep it open on a second monitor.</div>
+      </div>
+      <div class="mode-card" data-mode="prompt" tabindex="0" role="button">
+        <div class="mc-name">AI prompt</div>
+        <div class="mc-desc">Paste into Claude for questions tailored to your exact context.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Extras -->
+  <div class="card cs">
+    <div class="card-header">
+      <div class="step-dot ds">5</div>
+      <div>
+        <div class="card-title">Extras</div>
+        <div class="card-sub">Optional add-ons for delivery and follow-through.</div>
+      </div>
+    </div>
+    <div class="tog-row">
+      <div class="tog-text">
+        <div class="tt">Icebreaker first</div>
+        <div class="td">A low-stakes opener to ask in the first 10 minutes — speaking early lowers the bar for everything after.</div>
+      </div>
+      <div class="toggle on" id="tog-ice" tabindex="0" role="switch" aria-checked="true"></div>
+    </div>
+    <div class="tog-row">
+      <div class="tog-text">
+        <div class="tt">Diplomatic phrasings</div>
+        <div class="td">Softeners that make pointed questions land as curiosity, not attack.</div>
+      </div>
+      <div class="toggle" id="tog-soft" tabindex="0" role="switch" aria-checked="false"></div>
+    </div>
+    <div class="tog-row">
+      <div class="tog-text">
+        <div class="tt">Post-meeting review</div>
+        <div class="td">A 5-minute checklist for after the meeting — this is what trains the muscle long-term.</div>
+      </div>
+      <div class="toggle" id="tog-review" tabindex="0" role="switch" aria-checked="false"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════ RIGHT: OUTPUT ═══════════ -->
+<div class="output-col">
+
+  <div class="output-card">
+    <div class="output-head">
+      <span class="output-label" id="output-label">Your cheat sheet</span>
+      <span class="char-count" id="char-count">0 chars</span>
+    </div>
+    <div class="output-box" id="output">Pick a meeting type — your questions build here in real time.</div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="copy-btn" onclick="copyOutput()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        Copy
+      </button>
+      <button class="btn" onclick="printSheet()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Print
+      </button>
+    </div>
+    <div class="util-row">
+      <button class="util-btn" onclick="saveProfile()">Save</button>
+      <button class="util-btn" onclick="loadProfile()">Load</button>
+      <button class="util-btn" onclick="exportProfile()">Export .json</button>
+      <button class="util-btn" onclick="document.getElementById('file-import').click()">Import</button>
+      <button class="util-btn" onclick="clearFields()">Clear</button>
+      <input type="file" id="file-import" accept=".json" style="display:none" onchange="importProfile(event)"/>
+    </div>
+  </div>
+
+  <div class="card ci">
+    <div class="card-header" style="margin-bottom:.6rem;">
+      <div class="step-dot di">✦</div>
+      <div>
+        <div class="card-title">The 10-second version</div>
+        <div class="card-sub">When your mind blanks mid-meeting, pick ONE letter and scan for what's missing.</div>
+      </div>
+    </div>
+    <div class="mini-ref">
+      <b class="mt">T</b>arget — what problem, for whom &nbsp;·&nbsp;
+      <b class="mr">R</b>isks — blast radius, failure modes &nbsp;·&nbsp;
+      <b class="mp">A</b>ssumptions — what's unverified &nbsp;·&nbsp;
+      <b class="mg">C</b>onstraints — cost, ownership, rollback &nbsp;·&nbsp;
+      <b class="ms">E</b>vidence — detection, validation, metrics.
+      <br/><br/>
+      Presenters prepare for T, R, C. They rarely prepare for <b class="mp">A</b> and <b class="ms">E</b>. Aim there.
+    </div>
+  </div>
+
+</div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ─── State ────────────────────────────────────────────────
+const S = {
+  lane: 'arch',
+  lenses: ['A','E'],
+  mode: 'cheat',
+  extras: { ice:true, soft:false, review:false }
+};
+
+// ─── Question bank ────────────────────────────────────────
+const LENS_NAMES = { T:'Target', R:'Risks', A:'Assumptions', C:'Constraints', E:'Evidence' };
+const LANE_NAMES = {
+  arch:'Architecture review', incident:'Incident call', vendor:'Vendor pitch',
+  change:'Change request / CAB', standup:'Standup', general:'Technical discussion'
+};
+const RECO = {
+  arch:    { lenses:['A','E'], why:'presenters rarely prepare for those.' },
+  incident:{ lenses:['R','E'], why:'blast radius and confirmation dominate live incidents.' },
+  vendor:  { lenses:['A','E'], why:'vendors systematically dodge both.' },
+  change:  { lenses:['A','E'], why:'"was it tested" and "how do we validate" catch most bad changes.' },
+  standup: { lenses:['E'],     why:'one lens, one sentence — keep it short.' },
+  general: { lenses:['A','E'], why:'the two lenses speakers least often cover themselves.' }
+};
+
+const BANK = {
+  arch: {
+    T: [
+      'What requirement is driving this design — compliance, scale, or security posture?',
+      'If we could only keep one property of this design, which one matters most?',
+      'Is this solving the problem, or a symptom of something upstream?'
+    ],
+    R: [
+      'What\u2019s the blast radius if this component is compromised — what can an attacker reach from here?',
+      'Where\u2019s the single point of failure in this diagram?',
+      'Does this create any new trust relationships between segments that didn\u2019t exist before?'
+    ],
+    A: [
+      'This assumes east-west traffic is trusted once inside the segment — is that intentional?',
+      'Are we assuming the identity provider is always available? What happens during an IdP outage?',
+      'What are we assuming about traffic volume or growth that this design depends on?'
+    ],
+    C: [
+      'Who operates this after it ships — do we have the headcount and skills to run it?',
+      'What does this cost us in latency or complexity compared to the current design?',
+      'What\u2019s the migration path — can we get there incrementally or is it a big bang?'
+    ],
+    E: [
+      'How would we detect lateral movement inside this architecture?',
+      'What logging exists at each boundary, and where does it go?',
+      'How do we validate the segmentation actually works — is there a plan to test it?'
+    ]
+  },
+  incident: {
+    T: [
+      'Right now, are we prioritizing containment, eradication, or preserving evidence — those can conflict?',
+      'What\u2019s the actual business impact so far, versus what we\u2019re worried about?'
+    ],
+    R: [
+      'If we take that host offline, what breaks downstream?',
+      'Could the attacker have persistence somewhere we haven\u2019t looked — scheduled tasks, service accounts, OAuth grants?',
+      'What\u2019s the risk this is a decoy while something else is happening?'
+    ],
+    A: [
+      'We\u2019re assuming this started with the phishing email — what evidence rules out an earlier foothold?',
+      'Are we assuming the logs are intact? Could the attacker have tampered with them?'
+    ],
+    C: [
+      'How long can we keep this system isolated before the business forces our hand?',
+      'Do we need legal or comms involved before we take the next step?'
+    ],
+    E: [
+      'What indicator tells us containment actually worked?',
+      'How will we confirm eradication — what are we monitoring and for how long before we call it closed?',
+      'Retro: what detection would have caught this a week earlier?'
+    ]
+  },
+  vendor: {
+    T: [
+      'Which specific gap in our current stack does this close that we can\u2019t close with what we already own?',
+      'What problem were your top three customers solving when they bought this?'
+    ],
+    R: [
+      'If your cloud service goes down, does the agent fail open or fail closed?',
+      'What data leaves our environment, where is it stored, and who at your company can see it?'
+    ],
+    A: [
+      'Your detection rates assume default config — what were the numbers in an environment tuned like ours?',
+      'Does this assume we have staff to triage its alerts? What alert volume do customers our size actually see?'
+    ],
+    C: [
+      'What\u2019s the true cost at year three — tiers, ingest fees, professional services included?',
+      'What\u2019s the exit path — if we leave in two years, how do we get our data and detections out?'
+    ],
+    E: [
+      'Can we run a proof of concept against our own environment, with success criteria we define?',
+      'How do we independently verify the tool works — MITRE ATT&CK evaluations or third-party testing?'
+    ]
+  },
+  change: {
+    T: [
+      'What\u2019s the driver for this change — is there a ticket, finding, or incident behind it?',
+      'Is this fixing the root cause or patching the symptom?'
+    ],
+    R: [
+      'What\u2019s the worst realistic outcome if this goes sideways during the window?',
+      'What else touches this system that isn\u2019t listed in the change record?'
+    ],
+    A: [
+      'Has this exact change been tested in staging, or an environment that actually mirrors prod?',
+      'We\u2019re assuming the maintenance window is big enough — what\u2019s the rollback point of no return?'
+    ],
+    C: [
+      'Who\u2019s on the call during the window if it breaks, and do they have access?',
+      'Does this conflict with any other change scheduled the same night?'
+    ],
+    E: [
+      'What\u2019s the specific validation step that proves the change worked — not just "it didn\u2019t break"?',
+      'What\u2019s the rollback procedure, and has the rollback itself been tested?'
+    ]
+  },
+  standup: {
+    T: ['Is that blocker on the critical path for the release, or can it slide?'],
+    R: ['Does your change touch anything the on-call team should know about before Friday?'],
+    A: ['You mentioned waiting on the network team — have they actually confirmed, or are we assuming?'],
+    C: ['Do you need another set of hands on that, or is it a one-person job?'],
+    E: ['How will we know that fix worked — is there a dashboard or alert watching it?']
+  },
+  general: {
+    T: [
+      'What problem is this actually solving, and for whom?',
+      'What does success look like in six months?',
+      'Is this the problem, or a symptom of something upstream?'
+    ],
+    R: [
+      'What\u2019s the failure mode if this breaks at 2 AM?',
+      'What new attack surface or dependency does this create?',
+      'What\u2019s the risk of doing nothing?'
+    ],
+    A: [
+      'What are we assuming about user behavior, traffic, or the environment?',
+      'What happens if that assumption is wrong?',
+      'Has this been tested somewhere like our environment?'
+    ],
+    C: [
+      'What are we giving up to get this?',
+      'Who maintains it after go-live?',
+      'What\u2019s the rollback plan if we\u2019re wrong?'
+    ],
+    E: [
+      'How do we detect if this fails silently?',
+      'What metric proves this was worth doing?',
+      'Who owns it, and what\u2019s the timeline?'
+    ]
+  }
+};
+
+const TOPIC_STARTERS = {
+  T: t => `What problem is ${t} actually solving that we can\u2019t solve today?`,
+  R: t => `What\u2019s the blast radius if ${t} fails or is compromised?`,
+  A: t => `What are we assuming about ${t} that no one has verified?`,
+  C: t => `What does ${t} cost us in time, people, or tech debt — and who owns it after go-live?`,
+  E: t => `How will we know ${t} is working — and how would we detect if it silently failed?`
+};
+
+const ICEBREAKERS = {
+  arch:    'Early opener: "Before we go deep — can you give the one-sentence version of what this design optimizes for?"',
+  incident:'Early opener: "Quick sync — what\u2019s our current confidence level on scope? Low, medium, high?"',
+  vendor:  'Early opener: "Before the demo — what does a typical deployment timeline look like for a team our size?"',
+  change:  'Early opener: "Can you walk us through the before/after state in one sentence each?"',
+  standup: 'Early opener: react to someone else\u2019s update first — "Nice, was that the fix you mentioned Monday?"',
+  general: 'Early opener: "Can you say a bit more about how X connects to Y? Want to make sure I\u2019m following."'
+};
+
+const SOFTENERS = [
+  '"I might be missing context here, but..."',
+  '"Help me understand..." (instead of "why did you...")',
+  '"Can you walk me through what happens when..."',
+  '"This might already be covered, but..."',
+  '"Playing devil\u2019s advocate for a second..."',
+  'Aim the question at the gap, not the person. Short, specific, one sentence.'
+];
+
+const REVIEW = [
+  'What questions occurred to me AFTER the meeting? Write them down — this trains the muscle.',
+  'Send the best one as a follow-up: "Was thinking about the discussion — did we consider X?"',
+  'Which lens did the presenter skip entirely? (It\u2019s usually A or E.)',
+  'Did I speak in the first 10 minutes? If not, what stopped me?',
+  'One thing I learned that I didn\u2019t know this morning.'
+];
+
+// ─── Build: cheat sheet ───────────────────────────────────
+function val(id){ return document.getElementById(id).value.trim(); }
+
+function buildCheatSheet(){
+  const topic = val('topic'), proposal = val('proposal'), role = val('role'), gut = val('gut');
+  const lenses = ['T','R','A','C','E'].filter(l => S.lenses.includes(l));
+  if (!lenses.length) return '';
+
+  const p = [];
+  p.push(`═══ TRACE CHEAT SHEET — ${LANE_NAMES[S.lane].toUpperCase()} ═══`);
+  if (topic) p.push(`Topic: ${topic}`);
+  if (proposal) p.push(`On the table: ${proposal}`);
+  p.push('');
+
+  if (S.extras.ice){
+    p.push(`⚡ SPEAK EARLY — BREAK THE SEAL`);
+    p.push(ICEBREAKERS[S.lane]);
+    p.push('');
+  }
+
+  lenses.forEach(L => {
+    p.push(`── ${L} · ${LENS_NAMES[L].toUpperCase()} ──`);
+    if (topic) p.push(`★ ${TOPIC_STARTERS[L](`"${topic}"`)}`);
+    (BANK[S.lane][L] || []).forEach(q => p.push(`• ${q}`));
+    p.push('');
+  });
+
+  if (gut){
+    p.push(`── YOUR GUT FLAG ──`);
+    p.push(`You noted: "${gut}"`);
+    p.push(`Turn it into a question: "Can we talk through ${gut.length > 60 ? 'that' : 'this'} for a second — I want to make sure it\u2019s covered."`);
+    p.push('');
+  }
+
+  if (S.extras.soft){
+    p.push(`── DELIVERY: LAND IT AS CURIOSITY, NOT ATTACK ──`);
+    SOFTENERS.forEach(s => p.push(`• ${s}`));
+    p.push('');
+  }
+
+  if (S.extras.review){
+    p.push(`── AFTER THE MEETING (5 MIN) ──`);
+    REVIEW.forEach((r,i) => p.push(`${i+1}. ${r}`));
+    p.push('');
+  }
+
+  p.push(`Rule of thumb: one good question early beats five held back. Aim at the gap, not the spotlight.`);
+  return p.join('\n');
+}
+
+// ─── Build: AI prompt ─────────────────────────────────────
+function buildAIPrompt(){
+  const topic = val('topic'), proposal = val('proposal'), role = val('role'), gut = val('gut');
+  const lenses = ['T','R','A','C','E'].filter(l => S.lenses.includes(l));
+  if (!lenses.length) return '';
+
+  const p = [];
+  p.push(`You are my meeting preparation copilot. I work in cybersecurity/IT and I\u2019m about to walk into a meeting. Use the TRACE framework to generate sharp, specific questions I can ask.
+
+TRACE lenses:
+• T — Target: what problem is this solving, for whom, what does success look like
+• R — Risks: failure modes, blast radius, new attack surface, risk of doing nothing
+• A — Assumptions: what\u2019s being taken for granted, what\u2019s untested, what if it\u2019s wrong
+• C — Constraints: cost, ownership, maintenance, tradeoffs, rollback
+• E — Evidence: detection, validation, metrics, how we know it works
+
+═══ MEETING CONTEXT ═══
+Meeting type: ${LANE_NAMES[S.lane]}`);
+  if (topic)    p.push(`Topic: ${topic}`);
+  if (proposal) p.push(`What\u2019s being proposed/discussed: ${proposal}`);
+  if (role)     p.push(`My role in the room: ${role}`);
+  if (gut)      p.push(`My gut says something is off here: ${gut}`);
+
+  p.push(`
+═══ WHAT I NEED ═══
+Focus on these lenses: ${lenses.map(l => `${l} (${LENS_NAMES[l]})`).join(', ')}.
+
+1. For each focus lens, give me 3 specific questions tailored to this exact context — not generic ones. Rank them by likely impact.
+2. Predict the ONE area the presenter is most likely glossing over, and give me the single best question to expose it constructively.
+3. Give me a short "one-liner" version of the top 3 questions — under 15 words each — for when the moment is fast.`);
+
+  if (S.extras.ice)  p.push(`4. Suggest one low-stakes opener I can ask in the first 10 minutes to break the seal.`);
+  if (S.extras.soft) p.push(`${S.extras.ice ? '5' : '4'}. Phrase every question so it lands as curiosity, not attack — I\u2019m building credibility, not scoring points.`);
+
+  p.push(`
+Ground rules:
+• Questions must be specific to my context, not template filler
+• No preamble or praise — go straight to the output
+• If critical context is missing, ask me ONE targeted clarifying question first`);
+
+  return p.join('\n');
+}
+
+// ─── Render ───────────────────────────────────────────────
+function buildAll(){
+  const text = S.mode === 'cheat' ? buildCheatSheet() : buildAIPrompt();
+  const el = document.getElementById('output');
+  const label = document.getElementById('output-label');
+  const cc = document.getElementById('char-count');
+  label.textContent = S.mode === 'cheat' ? 'Your cheat sheet' : 'Your AI prompt';
+  const has = !!text;
+  el.textContent = has ? text : 'Select at least one lens — your output builds here in real time.';
+  el.classList.toggle('has-content', has);
+  cc.textContent = has ? text.length.toLocaleString() + ' chars' : '0 chars';
+}
+
+// ─── Interactions ─────────────────────────────────────────
+function setLane(lane){
+  S.lane = lane;
+  document.querySelectorAll('#lane-cards .lane-card').forEach(c =>
+    c.classList.toggle('active', c.dataset.lane === lane));
+  const r = RECO[lane];
+  document.getElementById('reco-text').textContent =
+    `Recommended for ${LANE_NAMES[lane].toLowerCase()}s: ${r.lenses.join(' + ')} — ${r.why}`;
+  buildAll();
+}
+
+function toggleLens(L){
+  const i = S.lenses.indexOf(L);
+  if (i >= 0) S.lenses.splice(i,1); else S.lenses.push(L);
+  syncLenses();
+  buildAll();
+}
+
+function syncLenses(){
+  document.querySelectorAll('#lens-rows .lens-row').forEach(row => {
+    const on = S.lenses.includes(row.dataset.lens);
+    row.classList.toggle('on', on);
+    row.querySelector('.lens-check').textContent = on ? 'on' : 'off';
+  });
+}
+
+function applyReco(){
+  S.lenses = [...RECO[S.lane].lenses];
+  syncLenses();
+  buildAll();
+  showToast('Recommended lenses applied ✓');
+}
+
+function setMode(mode){
+  S.mode = mode;
+  document.querySelectorAll('#mode-cards .mode-card').forEach(c =>
+    c.classList.toggle('active', c.dataset.mode === mode));
+  buildAll();
+}
+
+function toggleExtra(key, el){
+  S.extras[key] = !S.extras[key];
+  el.classList.toggle('on', S.extras[key]);
+  el.setAttribute('aria-checked', S.extras[key]);
+  buildAll();
+}
+
+// Wire up
+document.querySelectorAll('#lane-cards .lane-card').forEach(c => {
+  c.addEventListener('click', () => setLane(c.dataset.lane));
+  c.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' '){e.preventDefault();setLane(c.dataset.lane);} });
+});
+document.querySelectorAll('#lens-rows .lens-row').forEach(r => {
+  r.addEventListener('click', () => toggleLens(r.dataset.lens));
+  r.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleLens(r.dataset.lens);} });
+});
+document.querySelectorAll('#mode-cards .mode-card').forEach(c => {
+  c.addEventListener('click', () => setMode(c.dataset.mode));
+  c.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' '){e.preventDefault();setMode(c.dataset.mode);} });
+});
+[['tog-ice','ice'],['tog-soft','soft'],['tog-review','review']].forEach(([id,key]) => {
+  const el = document.getElementById(id);
+  el.addEventListener('click', () => toggleExtra(key, el));
+  el.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleExtra(key, el);} });
+});
+['topic','proposal','role','gut'].forEach(id =>
+  document.getElementById(id).addEventListener('input', buildAll));
+
+// ─── Copy / Print ─────────────────────────────────────────
+function copyOutput(){
+  const el = document.getElementById('output');
+  if (!el.classList.contains('has-content')) { showToast('Select at least one lens first.'); return; }
+  navigator.clipboard.writeText(el.textContent).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.classList.add('success');
+    btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Copied!`;
+    setTimeout(() => {
+      btn.classList.remove('success');
+      btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy`;
+    }, 2000);
+  });
+}
+
+function printSheet(){
+  const el = document.getElementById('output');
+  if (!el.classList.contains('has-content')) { showToast('Select at least one lens first.'); return; }
+  const w = window.open('', '_blank');
+  w.document.write(`<pre style="font-family:'DM Sans',sans-serif;font-size:12px;line-height:1.6;white-space:pre-wrap;padding:24px;">${el.textContent.replace(/</g,'&lt;')}</pre>`);
+  w.document.close();
+  w.print();
+}
+
+// ─── Save / Load / Export ─────────────────────────────────
+const FIELDS = ['topic','proposal','role','gut'];
+
+function collectProfile(){
+  const data = { fields:{}, state:{ lane:S.lane, lenses:[...S.lenses], mode:S.mode, extras:{...S.extras} } };
+  FIELDS.forEach(id => { data.fields[id] = document.getElementById(id).value; });
+  return data;
+}
+
+function applyProfile(data){
+  if (data.fields) FIELDS.forEach(id => { const el = document.getElementById(id); if (el && data.fields[id] !== undefined) el.value = data.fields[id]; });
+  if (data.state){
+    Object.assign(S, { lane:data.state.lane || 'arch', lenses:data.state.lenses || ['A','E'], mode:data.state.mode || 'cheat', extras:{...S.extras, ...data.state.extras} });
+    setLane(S.lane);
+    syncLenses();
+    document.querySelectorAll('#mode-cards .mode-card').forEach(c =>
+      c.classList.toggle('active', c.dataset.mode === S.mode));
+    [['tog-ice','ice'],['tog-soft','soft'],['tog-review','review']].forEach(([id,key]) => {
+      const el = document.getElementById(id);
+      el.classList.toggle('on', S.extras[key]);
+      el.setAttribute('aria-checked', S.extras[key]);
+    });
+  }
+  buildAll();
+}
+
+function saveProfile(){
+  try {
+    localStorage.setItem('trace-meeting-copilot', JSON.stringify(collectProfile()));
+    showToast('Saved ✓');
+  } catch(e){ showToast('Save failed — try Export instead'); }
+}
+
+function loadProfile(){
+  try {
+    const raw = localStorage.getItem('trace-meeting-copilot');
+    if (!raw){ document.getElementById('file-import').click(); return; }
+    applyProfile(JSON.parse(raw));
+    showToast('Loaded ✓');
+  } catch(e){ showToast('Load failed — file may be corrupt'); }
+}
+
+function exportProfile(){
+  const blob = new Blob([JSON.stringify(collectProfile(), null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'trace-meeting-copilot.json'; a.click();
+  URL.revokeObjectURL(url);
+  showToast('Exported as .json ✓');
+}
+
+function importProfile(e){
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => { try { applyProfile(JSON.parse(ev.target.result)); showToast('Imported ✓'); } catch { showToast('Import failed — invalid file'); } };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function clearFields(){
+  FIELDS.forEach(id => { document.getElementById(id).value = ''; });
+  buildAll(); showToast('Fields cleared.');
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Init
+syncLenses();
+buildAll();
+</script>
+</body>
+</html>
